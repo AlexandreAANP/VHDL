@@ -15,7 +15,8 @@ architecture behavior of tb_encripter is
             data : in std_logic_vector(7 downto 0);
             clk : in std_logic;
             rst : in std_logic;
-            encripted_data : out std_logic_vector(7 downto 0)
+            encripted_data : out std_logic_vector(7 downto 0);
+            encrypt: out boolean
         );
     end component;
 
@@ -25,6 +26,7 @@ architecture behavior of tb_encripter is
     signal clk           : std_logic := '0';
     signal rst           : std_logic := '0';
     signal encripted_data : std_logic_vector(7 downto 0);
+    signal encrypt: boolean;
 
 
     constant clk_period : time := 10 ns;
@@ -34,7 +36,8 @@ begin
         data => data,
         clk => clk,
         rst => rst,
-        encripted_data => encripted_data
+        encripted_data => encripted_data,
+        encrypt => encrypt
     );
 
 
@@ -53,9 +56,8 @@ begin
     stim_proc: process
     begin
 
-
-        clk <= '0';
         rst <= '1';
+        data <= (others => '0');
         wait for clk_period;
 
         rst <= '0';

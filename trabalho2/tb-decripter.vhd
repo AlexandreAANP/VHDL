@@ -14,9 +14,7 @@ architecture behavior of tb_decripter is
         Port (
             data : in std_logic_vector(7 downto 0);
             clk : in std_logic;
-            rst : in std_logic;
-            decripted_data : out std_logic_vector(7 downto 0);
-            encrypt: out boolean
+            decripted_data : out std_logic_vector(7 downto 0)
         );
     end component;
 
@@ -24,10 +22,7 @@ architecture behavior of tb_decripter is
     -- Signals to connect to the UUT
     signal data          : std_logic_vector(7 downto 0); -- Example input
     signal clk           : std_logic := '0';
-    signal rst           : std_logic := '0';
     signal decripted_data : std_logic_vector(7 downto 0);
-    signal encrypt: boolean;
-
 
     constant clk_period : time := 10 ns;
 begin
@@ -35,9 +30,7 @@ begin
     uut: decripter port map (
         data => data,
         clk => clk,
-        rst => rst,
-        decripted_data => decripted_data,
-        encrypt => encrypt
+        decripted_data => decripted_data
     );
 
 
@@ -56,11 +49,9 @@ begin
     stim_proc: process
     begin
 
-        rst <= '1';
         data <= (others => '0');
         wait for clk_period;
 
-        rst <= '0';
         wait for clk_period *3;
 
         -- Apply some test vectors

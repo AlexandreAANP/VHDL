@@ -4,43 +4,47 @@ use ieee.numeric_std.all;
 
 entity encripter is
     Port ( 
-        data : in std_logic_vector(7 downto 0);
+        bit_in : in std_logic;
         clk: in std_logic;
-        encripted_data : out std_logic_vector(7 downto 0)
+        rst: in std_logic;
+        en: in std_logic;
+        bit_out : out std_logic
     );
 end encripter;
 
 
 architecture Behavioral of encripter is
-    signal updated_data : unsigned(7 downto 0);
-    signal encrypted : boolean := false;
+    signal key_bit : std_logic;
+
+    component lfsr
+        Port (
+            rst : in std_logic;
+            en : in std_logic;
+            clk : in std_logic;
+            seed : in std_logic_vector(7 downto 0);
+            out_bit : out std_logic
+        );
+    end component;
+
+    constant seed : std_logic_vector(7 downto 0) := "10101010";
 begin
-    encript: process (clk)
-    variable temp_data : unsigned(7 downto 0);
-    variable bit_process : std_logic;
+    lsfr_inst: lfsr port map (
+        rst => rst,
+        en => en,
+        clk => clk,
+        seed => seed,
+        out_bit => key_bit
+    );
+
+    process(clk, rst, en, key_bit)
     begin
-
-        if rising_edge(clk) then
-            temp_data := unsigned(data);
-            for i in 0 to 7 loop
-                -- get the last bit
-                bit_process := temp_data(0);
-
-                -- xor bit_process to the element before the last
-                bit_process := bit_process xor temp_data(1);
-
-                -- shift to right one
-                temp_data := unsigned(temp_data srl 1);
-
-                -- set the first element with the value of bit_process
-                temp_data(7) := bit_process;
-
-            end loop;
-            encripted_data <= std_logic_vector(temp_data);
-
+        if rst = '1' then
+            bit_out <= '0';
+        elsif rising_edge(clk) then
+            if en = '1' then
+                bit_out <= bit_in xor key_bit;
+            end if;
         end if;
-        
     end process;
-
 
 end Behavioral;

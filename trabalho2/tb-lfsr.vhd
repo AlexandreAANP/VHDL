@@ -26,7 +26,7 @@ architecture behavior of tb_lfsr is
     signal clk           : std_logic := '0';
     signal en            : std_logic := '1';
     signal rst           : std_logic := '0';
-    signal out_bit       : std_logic;
+    signal out_bit       : std_logic := '0';
 
 
     constant clk_period : time := 10 ns;
@@ -55,13 +55,13 @@ begin
     -- Stimulus process to drive the inputs and generate a clock
     stim_proc: process
     begin
-
+        seed <= "10101010"; -- Example seed 
         rst <= '1';
         en <= '0';
         wait for clk_period;
         rst <= '0';
         en <= '1';
-        seed <= "10101010"; -- Example seed 
+         
 
         wait for clk_period *10;
 

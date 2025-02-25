@@ -3,52 +3,53 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-
+-- Testbench entity
 entity tb_main is
 end tb_main;
 
+architecture behavior of tb_main is
 
-architecture behavioral of tb_main is
-
-    component encripter
-        Port ( 
-            data : in std_logic_vector(7 downto 0);
+    -- Component declaration for the unit under test (UUT)
+    component chiper
+        Port (
+            bit_in : in std_logic;
             clk: in std_logic;
-            encripted_data : out std_logic_vector(7 downto 0)
-        );
-    end component;
-
-
-    component decripter
-        Port ( 
-            data : in std_logic_vector(7 downto 0);
-            clk: in std_logic;
-            decripted_data : out std_logic_vector(7 downto 0)
+            rst: in std_logic;
+            en: in std_logic;
+            bit_out : out std_logic
         );
     end component;
 
 
     -- Signals to connect to the UUT
-    signal data          : std_logic_vector(7 downto 0); -- Example input
-    signal clk           : std_logic := '0';
-    signal encripted_data : std_logic_vector(7 downto 0);
-    signal decrepted_data : std_logic_vector(7 downto 0);
+    signal bit_in          : std_logic := '0';
+    signal rst             : std_logic := '0';
+    signal en_encripter    : std_logic := '0';
+    signal en_decripter     : std_logic := '0';
+    signal clk             : std_logic := '0';
+    signal bit_encripted        : std_logic;
+    signal bit_out         : std_logic;
 
     constant clk_period : time := 10 ns;
 begin
-    -- Instantiate the Unit Under Test (UUT) encripter
-    uut: encripter port map (
-        data => data,
+    -- Instantiate the Unit Under Test (UUT)
+    encripter: chiper port map (
+        rst => rst,
+        en => en_encripter,
         clk => clk,
-        encripted_data => encripted_data
+        bit_in => bit_in,
+        bit_out => bit_encripted
     );
 
-    -- Instantiate the Unit Under Test (UUT) decripter
-    uut2: decripter port map (
-        data => encripted_data,
+
+    decripter: chiper port map (
+        rst => rst,
+        en => en_decripter,
         clk => clk,
-        decripted_data => decrepted_data
+        bit_in => bit_encripted,
+        bit_out => bit_out
     );
+
 
 
     -- Clock generation
@@ -66,31 +67,60 @@ begin
     stim_proc: process
     begin
 
-        data <= (others => '0');
+        rst <= '1';
         wait for clk_period;
-
-        wait for clk_period *3;
-
-        -- Apply some test vectors
-        -- First input expected 00111111 in encripted_data signal
-        data <= "11010101";   -- Example data
-        wait for clk_period * 3;       -- Wait for 10 ns
+        rst <= '0';
+        en_encripter <= '1';
+        wait for clk_period;
+        en_decripter <= '1';
         
-        -- Second input expected 01111111 in encripted_data signal
-        data <= "10101010";   -- Another test case
-        wait for clk_period * 3;       -- Wait for 10 ns
-        
-        -- Third input expected 10001000 in encripted_data signal
-        data <= "11110000";   -- Another test case
-        wait for clk_period * 3;       -- Wait for 10 ns
-        
-        -- Fourth input expected 00001000 in encripted_data signal
-        data <= "00001111";   -- Another test case
-        wait for clk_period * 3;       -- Wait for 10 ns
 
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+
+        
+
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+
+        
+
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '0'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+
+        
+
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        bit_in <= '1'; wait for clk_period;
+        
+
+        -- End the simulation
         assert false report "End of simulation" severity failure;
         wait;
-
     end process;
 
-end behavioral;
+end behavior;

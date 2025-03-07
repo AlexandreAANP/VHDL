@@ -1,6 +1,7 @@
-data= ""
-for i in range(50):
-    data += '"'+format(i, '016b')+'"' + ",\n" if i != 49 else '"'+format(i, '016b')+'"'
-
+with open("noisy_signal_adapted.txt", "w") as f_w:
     
-print(data)
+    with open("noisy_signal.txt", "r") as f_r:
+        for i in f_r.readlines():
+            f_w.write(f'"{i.strip()}",\n')
+        
+        

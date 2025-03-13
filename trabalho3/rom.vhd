@@ -5,8 +5,8 @@ use ieee.numeric_std.all;
 
 entity filter_rom is
     Port ( 
-        addr : in std_logic_vector(5 downto 0);
-        data_out : out std_logic_vector(15 downto 0)
+        addr : in unsigned(5 downto 0);
+        data_out : out signed(15 downto 0)
     );
 end filter_rom;
 
@@ -72,7 +72,7 @@ constant coeffs : coeff_array := (
 
 begin
     
-    data_out <= std_logic_vector(coeffs(to_integer(unsigned(addr))));
+    data_out <= coeffs(to_integer(addr));
 
 
 end Behaviroal;

@@ -7,8 +7,8 @@ use ieee.numeric_std.all;
 
 entity noisy_signal is
     Port ( 
-        addr : in std_logic_vector(9 downto 0);
-        data_out : out std_logic_vector(15 downto 0)
+        addr : in unsigned(9 downto 0);
+        data_out : out signed(15 downto 0)
     );
 end noisy_signal;
 
@@ -1024,7 +1024,7 @@ constant signal_array : signal_value := (
 
 begin
     
-    data_out <= std_logic_vector(signal_array(to_integer(unsigned(addr))));
+    data_out <= signal_array(to_integer(addr));
 
 
 end Behaviroal;

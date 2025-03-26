@@ -13,7 +13,7 @@ architecture Behavioral of convultion_tb_v3 is
             clk : in std_logic;
             rst : in std_logic;
             en : in std_logic;
-            convultion_result : out signed(47 downto 0)
+            convultion_result : out signed(31 downto 0)
         );
     end component;
 
@@ -21,7 +21,8 @@ architecture Behavioral of convultion_tb_v3 is
     signal clk_tb : std_logic := '0';
     signal rst_tb : std_logic := '0';
     signal en_tb : std_logic := '0';
-    signal conv_result_tb : signed(47 downto 0);
+    signal conv_result_tb : signed(31 downto 0);
+    signal done_tb : std_logic := '0';
     constant clk_period : time := 10 ns;
 
 begin
@@ -34,6 +35,8 @@ begin
             en => en_tb,
             convultion_result => conv_result_tb
         );
+
+
 
     -- Clock process
     clk_process: process
@@ -54,6 +57,10 @@ begin
         rst_tb <= '1';
         wait for 20 ns;
         rst_tb <= '0';
+
+
+
+
 
         -- Enable the convolution process
         -- en_tb <= '1';

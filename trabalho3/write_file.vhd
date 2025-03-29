@@ -8,45 +8,39 @@ use STD.TEXTIO.ALL;
 entity write_file is
     Port ( 
         clk: in std_logic;
-        cls_file: in std_logic;
         enable: in std_logic;
         data: in signed(31 downto 0)
     );
 end write_file;
 
 architecture Behavioral of write_file is
-
-
+    file output_file : text open write_mode is "D:/VHDL/trabalho3/output.txt";
+    signal result: string(1 to 32) := (others => '0');
     function to_bin_str(x: signed) return string is
-        variable result: string(1 to x'length);
+        -- string are indexed using natural numbers
+        variable result: string(1 to 32) := (others => '0');
     begin
-        for i in x'range loop
+        for i in 0 to 31 loop
             if x(i) = '1' then
-                result(i) := '1';
+                result(i+1) := '1';
             else
-                result(i) := '0';
+                result(i+1) := '0';
             end if;
         end loop;
         return result;
     end function;
 begin
 
-    process
-        file output_file : text open write_mode is "output.txt";
+    process(clk)    
         variable line_content : line;
     begin
-        if cls_file = '1' then
-            file_close(output_file);
-            wait;
-        end if;
         if rising_edge(clk) then
             if enable = '1' then
                 -- Write data to file
-                write(line_content, to_bin_str(data));
+                result <= to_bin_str(data);
+                write(line_content, result);
                 writeline(output_file, line_content);
             end if;
-
         end if;
-        wait; -- End process
     end process;
 end Behavioral;

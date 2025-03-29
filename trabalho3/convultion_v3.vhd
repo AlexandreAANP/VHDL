@@ -32,8 +32,6 @@ architecture Behavioral of convultion_v3 is
 
     signal write_file_enable: std_logic := '0';
 
-    signal cls_file: std_logic := '0';
-
     component filter_rom is
         Port (
             addr : in unsigned(5 downto 0);
@@ -61,7 +59,6 @@ architecture Behavioral of convultion_v3 is
     component write_file is
         Port (
             clk: in std_logic;
-            cls_file: in std_logic;
             enable: in std_logic;
             data: in signed(31 downto 0)
         );
@@ -90,7 +87,6 @@ begin
 
     uut_write_file: write_file port map (
         clk => clk,
-        cls_file => cls_file,
         enable => write_file_enable,
         data => ram_data_out
     );
@@ -145,7 +141,7 @@ begin
                 ram_addr <= to_unsigned(index, 10);
                 index <= index + 1;
                 if index = 950 then
-                    cls_file <= '1';
+                    write_file_enable <= '0';
                     assert false report "End of simulation" severity failure;
                 end if;
 

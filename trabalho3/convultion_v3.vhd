@@ -30,6 +30,8 @@ architecture Behavioral of convultion_v3 is
     signal ram_data_in : signed(31 downto 0) := (others => '0');
     signal ram_data_out : signed(31 downto 0) := (others => '0');
 
+    signal write_file_enable: std_logic := '0';
+
     signal cls_file: std_logic := '0';
 
     component filter_rom is
@@ -60,6 +62,7 @@ architecture Behavioral of convultion_v3 is
         Port (
             clk: in std_logic;
             cls_file: in std_logic;
+            enable: in std_logic;
             data: in signed(31 downto 0)
         );
     end component;
@@ -88,6 +91,7 @@ begin
     uut_write_file: write_file port map (
         clk => clk,
         cls_file => cls_file,
+        enable => write_file_enable,
         data => ram_data_out
     );
 
@@ -137,6 +141,7 @@ begin
         elsif state = DONE then
             if rising_edge(clk) then
                 ram_write_mode <= '0'; --reading mode
+                write_file_enable <= '1';
                 ram_addr <= to_unsigned(index, 10);
                 index <= index + 1;
                 if index = 950 then

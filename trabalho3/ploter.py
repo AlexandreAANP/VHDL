@@ -9,13 +9,13 @@ def twos_complement(binary_str):
     return value
 
 # Open and read the file (make sure it's in the same folder, baka)
-with open('./noisy_signal.txt', 'r') as file:
+with open('./output.txt', 'r') as file:
     lines = file.readlines()
 
 
 # Convert each line from two's complement to a signed integer
 signal = [twos_complement(line.strip()) for line in lines if line.strip()]
-print(signal)
+
 # Plot the signal
 plt.figure(figsize=(10, 4))
 plt.plot(signal)

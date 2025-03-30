@@ -93,6 +93,7 @@ begin
 
 
     convultion_process: process(clk, rst)
+    variable acc : signed(31 downto 0) := (others => '0');
     begin     
         if rst = '1' then
             calc_convultion <= to_signed(0,32);
@@ -110,41 +111,56 @@ begin
             end if;
             
         elsif state = CALC then
-           
             if rising_edge(clk) then
-                calc_convultion <= to_signed(0,32);
-                for i in 0 to 50 loop
-                    calc_convultion <= calc_convultion + (filter_data(i) * signal_sample(i));
-                end loop;
-                --save value in memory
-                ram_write_mode <= '1';
-                ram_addr <= to_unsigned(index, 10);
-                ram_data_in <= calc_convultion; --resize(shift_right(calc_convultion, 15), 16);
-                --resize(shift_right(acc, 15), 16);
-                convultion_result <= calc_convultion;
-                
-                index <= index + 1;
-                
-                signal_addr <= to_unsigned((50 + index), 10);
-                signal_sample <= signal_sample(0 to 49) & signal_output;
-                
                 if index = 949 then
+                    index <= -1; -- Reset index after reaching 949
+                    ram_write_mode <= '0'; -- Switch to reading mode
+                    ram_addr <= to_unsigned(0, 10);
                     state <= DONE;
-                    index <= 0;
+                else
+                    acc := (others => '0');
+                    for i in 0 to 50 loop
+                        acc := acc + (filter_data(i) * signal_sample(i));
+                    end loop;
+                        --save value in memory
+                    ram_write_mode <= '1';
+                    ram_addr <= to_unsigned(index, 10);
+                    ram_data_in <= acc;
+                    
+                    --resize(shift_right(acc, 15), 16);
+                    convultion_result <= acc;
+                    index <= index + 1;
+                    
+                    signal_addr <= to_unsigned((50 + index), 10);
+                    signal_sample <= signal_sample(1 to 50) & signal_output;
+
                 end if;
+                
+                
+                
+                    
+                    -- ram_write_mode <= '0'; --reading mode
+                    -- ram_addr <= to_unsigned(index, 10);
+                    -- write_file_enable <= '1';
+                
             end if;
         
         elsif state = DONE then
+            
             if rising_edge(clk) then
-                ram_write_mode <= '0'; --reading mode
+                
+                ram_addr <= to_unsigned(index + 1, 10);
                 write_file_enable <= '1';
-                ram_addr <= to_unsigned(index, 10);
-                index <= index + 1;
-                if index = 950 then
+
+                if index = 949 then  -- Stop at 949 instead of 950
                     write_file_enable <= '0';
                     assert false report "End of simulation" severity failure;
+                else
+                    index <= index + 1; -- Move this inside the else block
                 end if;
 
+                
+                
             end if;
         end if;
         

@@ -14,17 +14,17 @@ entity write_file is
 end write_file;
 
 architecture Behavioral of write_file is
+    -- File declaration, since I'm in diferent disk it's important to use the full path
     file output_file : text open write_mode is "D:/VHDL/trabalho3/output.txt";
-    signal result: string(1 to 32) := (others => '0');
     function to_bin_str(x: signed) return string is
         -- string are indexed using natural numbers
         variable result: string(1 to 32) := (others => '0');
     begin
         for i in 0 to 31 loop
             if x(i) = '1' then
-                result(i+1) := '1';
-            else
-                result(i+1) := '0';
+                result(x'length - i) := '1';
+            elsif x(i) = '0' then
+                result(x'length - i) := '0';
             end if;
         end loop;
         return result;
@@ -34,11 +34,10 @@ begin
     process(clk)    
         variable line_content : line;
     begin
-        if rising_edge(clk) then
+        if falling_edge(clk) then
             if enable = '1' then
                 -- Write data to file
-                result <= to_bin_str(data);
-                write(line_content, result);
+                write(line_content, to_bin_str(data));
                 writeline(output_file, line_content);
             end if;
         end if;

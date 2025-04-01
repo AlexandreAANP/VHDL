@@ -12,8 +12,7 @@ architecture Behavioral of filter_component_tb is
         Port (
             clk : in std_logic;
             rst : in std_logic;
-            en : in std_logic;
-            convultion_result : out signed(31 downto 0)
+            en : in std_logic
         );
     end component;
 
@@ -21,8 +20,6 @@ architecture Behavioral of filter_component_tb is
     signal clk_tb : std_logic := '0';
     signal rst_tb : std_logic := '0';
     signal en_tb : std_logic := '0';
-    signal conv_result_tb : signed(31 downto 0);
-    signal done_tb : std_logic := '0';
     constant clk_period : time := 10 ns;
 
 begin
@@ -32,8 +29,7 @@ begin
         port map (
             clk => clk_tb,
             rst => rst_tb,
-            en => en_tb,
-            convultion_result => conv_result_tb
+            en => en_tb
         );
 
 
@@ -54,22 +50,14 @@ begin
     stimulus_process: process
     begin
         -- Apply reset
+        en_tb <= '0';
         rst_tb <= '1';
         wait for 20 ns;
         rst_tb <= '0';
+        en_tb <= '1';
+        wait; -- Wait for some time to observe the output
 
 
-
-
-
-        -- Enable the convolution process
-        -- en_tb <= '1';
-   
-
-        -- -- Disable convolution
-        -- en_tb <= '0';
-        wait for 100000 ns;
-        assert false report "End of simulation" severity failure;
         -- End simulation
     end process;
 

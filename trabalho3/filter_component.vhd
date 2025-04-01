@@ -2,16 +2,18 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity convultion_v3 is
+entity filter_component is
     Port ( 
         clk: in std_logic;
         rst: in std_logic;
-        en: in std_logic;
-        convultion_result: out signed(31 downto 0)
+        en: in std_logic
     );
-end convultion_v3;
+end filter_component;
 
-architecture Behavioral of convultion_v3 is
+architecture Behavioral of filter_component is
+    -- states: 
+    -- INIT: Initialize the filter and signal data
+    -- CALC: Perform the convolution calculation and right each result in RAM
     type state_type is (INIT, CALC, DONE);
     signal state : state_type := INIT;
     signal filter_addr : unsigned(5 downto 0) := (others => '0');
@@ -122,26 +124,18 @@ begin
                     for i in 0 to 50 loop
                         acc := acc + (filter_data(i) * signal_sample(i));
                     end loop;
-                        --save value in memory
+                    
+                    --save value in memory
                     ram_write_mode <= '1';
                     ram_addr <= to_unsigned(index, 10);
                     ram_data_in <= acc;
-                    
-                    --resize(shift_right(acc, 15), 16);
-                    convultion_result <= acc;
+
                     index <= index + 1;
                     
                     signal_addr <= to_unsigned((50 + index), 10);
                     signal_sample <= signal_sample(1 to 50) & signal_output;
 
                 end if;
-                
-                
-                
-                    
-                    -- ram_write_mode <= '0'; --reading mode
-                    -- ram_addr <= to_unsigned(index, 10);
-                    -- write_file_enable <= '1';
                 
             end if;
         

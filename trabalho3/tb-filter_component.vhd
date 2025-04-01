@@ -2,13 +2,13 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity convultion_tb_v3 is
-end convultion_tb_v3;
+entity filter_component_tb is
+end filter_component_tb;
 
-architecture Behavioral of convultion_tb_v3 is
+architecture Behavioral of filter_component_tb is
 
     -- Component declaration for the DUT
-    component convultion_v3
+    component filter_component
         Port (
             clk : in std_logic;
             rst : in std_logic;
@@ -28,7 +28,7 @@ architecture Behavioral of convultion_tb_v3 is
 begin
 
     -- Instantiate the DUT
-    uut: convultion_v3
+    uut: filter_component
         port map (
             clk => clk_tb,
             rst => rst_tb,

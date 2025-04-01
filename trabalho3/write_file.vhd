@@ -1,26 +1,33 @@
+-- This VHDL code writes a signed 32-bit number to a text file in binary format.
+-- The file is opened in write mode, and the data is written when the enable signal is high.
+-- the output it's setted to disk D, in this case it's necessary to define the disk since I'm using the secondary disk of my computer
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_TEXTIO.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use STD.TEXTIO.ALL;
 
-
 entity write_file is
+    Generic(
+           DATA_LENGTH : integer := 32
+         );
     Port ( 
         clk: in std_logic;
         enable: in std_logic;
-        data: in signed(31 downto 0)
+        data: in signed(DATA_LENGTH - 1 downto 0)
     );
 end write_file;
 
 architecture Behavioral of write_file is
     -- File declaration, since I'm in diferent disk it's important to use the full path
     file output_file : text open write_mode is "D:/VHDL/trabalho3/output.txt";
+
     function to_bin_str(x: signed) return string is
         -- string are indexed using natural numbers
-        variable result: string(1 to 32) := (others => '0');
+        variable result: string(1 to x'length) := (others => '0');
     begin
-        for i in 0 to 31 loop
+        for i in 0 to x'length - 1 loop
             if x(i) = '1' then
                 result(x'length - i) := '1';
             elsif x(i) = '0' then

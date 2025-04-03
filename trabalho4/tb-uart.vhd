@@ -7,11 +7,12 @@ end uart_tb;
 
 architecture testbench of uart_tb is
     constant data_width_const : integer := 8;
+
     signal clk : std_logic := '0';
     signal rst : std_logic := '1';
     signal en : std_logic := '0';
     signal rx : std_logic := '1';
-    signal data_in : std_logic := '0';
+    signal data_in : std_logic_vector(0 to data_width_const - 1);
     signal is_busy : std_logic;
     signal data_invalid : std_logic;
     signal tx : std_logic;
@@ -28,7 +29,7 @@ architecture testbench of uart_tb is
             rst : in std_logic;
             en : in std_logic;
             rx : in std_logic;
-            data_in : in std_logic;
+            data_in : in std_logic_vector(0 to data_width_const - 1);
             is_busy: out std_logic;
             data_invalid: out std_logic;
             tx : out std_logic;
@@ -65,6 +66,9 @@ begin
     -- Stimulus process
     stimulus_process: process
     begin
+        -- initialize values
+        data_in <= (others => '0');
+
         -- Reset sequence
         rst <= '1';
         wait for 20 ns;
@@ -108,6 +112,10 @@ begin
         
         -- Wait and observe output
         wait for 100 ns;
+
+        -- send paralel data
+        data_in <= "11100101";
+        wait for 10 * clk_period;
         assert false report "End of simulation" severity failure;
         -- End of simulation
         wait;

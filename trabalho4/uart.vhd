@@ -11,11 +11,11 @@ entity uart is
         rst : in std_logic;
         en : in std_logic;
         rx : in std_logic;   --reception
-        data_in : in std_logic;
+        data_in : in std_logic_vector(0 to data_width - 1 ) := (others => '0');
         is_busy: out std_logic := '0';
         data_invalid: out std_logic := '0';
-        tx : out std_logic; --transmission
-        data_out : out std_logic_vector(0 to data_width - 1 )
+        tx : out std_logic := '0'; --transmission
+        data_out : out std_logic_vector(0 to data_width - 1 ) := (others => '0')
     );
 end uart;
 
@@ -25,8 +25,17 @@ architecture Behavioral of uart is
     
     signal state : uart_state := INIT;
 
-    signal tx_data : std_logic_vector(data_width - 1 downto 0) := (others => '0');
+    signal tx_data : std_logic_vector(0 to data_width - 1) := (others => '0');
     signal rx_data : std_logic_vector(0 to data_width - 1) := (others => '0');
+    
+    function vector_is_not_zero(x_vector: std_logic_vector) return std_logic is
+        variable result : std_logic := '0';
+    begin
+        for i in 0 to x_vector'length - 1 loop
+            result := result or x_vector(i);
+        end loop;
+        return result;
+    end function;
 
 begin
 
@@ -39,17 +48,30 @@ begin
                 when INIT =>
                     data_invalid <= '0';
                     rx_data <= (others => '0');
+                    tx_data <= (others => '0');
                     index := 0;
                     if rx = '0' then
+                        state <= BUSY;
+                    elsif vector_is_not_zero(data_in) = '1' then
+                        tx_data <= data_in;
                         state <= BUSY;
                     end if;
 
                 when BUSY =>
-                    rx_data(index) <= rx;
-                    index := index + 1;
-                    
-                    if index = data_width then
-                        state <= SEND;
+                    if vector_is_not_zero(data_in) = '1' then
+                        tx <= tx_data(index);
+                        index := index + 1;
+
+                        if index = data_width then
+                            state <= INIT;
+                        end if;
+                    else
+                        rx_data(index) <= rx;
+                        index := index + 1;
+                        
+                        if index = data_width then
+                            state <= SEND;
+                        end if;
                     end if;
 
                 when SEND =>
@@ -69,6 +91,5 @@ begin
             end case;
         end if;
     end process;
-
 
 end Behavioral;

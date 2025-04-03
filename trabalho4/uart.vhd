@@ -3,6 +3,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 entity uart is
+    Generic (
+        data_width : integer := 8
+    );
     Port (
         clk : in std_logic;
         rst : in std_logic;
@@ -12,13 +15,12 @@ entity uart is
         is_busy: out std_logic := '0';
         data_invalid: out std_logic := '0';
         tx : out std_logic; --transmission
-        data_out : out std_logic
+        data_out : out std_logic_vector(0 to data_width - 1 )
     );
 end uart;
 
 
 architecture Behavioral of uart is
-    constant data_width : integer := 8; 
     type uart_state is (INIT, BUSY, SEND);
     
     signal state : uart_state := INIT;
@@ -56,6 +58,10 @@ begin
                         parity := parity xor rx_data(i);
                     end loop;
                     data_invalid <= parity xor rx;
+                    
+                    data_out <= rx_data;
+                    
+
                     state <= INIT;
 
                 when others =>

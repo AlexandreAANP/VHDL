@@ -6,6 +6,7 @@ entity uart_tb is
 end uart_tb;
 
 architecture testbench of uart_tb is
+    constant data_width_const : integer := 8;
     signal clk : std_logic := '0';
     signal rst : std_logic := '1';
     signal en : std_logic := '0';
@@ -14,11 +15,14 @@ architecture testbench of uart_tb is
     signal is_busy : std_logic;
     signal data_invalid : std_logic;
     signal tx : std_logic;
-    signal data_out : std_logic;
+    signal data_out : std_logic_vector(0 to data_width_const - 1);
     
     constant clk_period : time := 10 ns;
     
     component uart
+        Generic(
+            DATA_WIDTH :integer := data_width_const
+        );
         Port (
             clk : in std_logic;
             rst : in std_logic;
@@ -28,7 +32,7 @@ architecture testbench of uart_tb is
             is_busy: out std_logic;
             data_invalid: out std_logic;
             tx : out std_logic;
-            data_out : out std_logic
+            data_out : out std_logic_vector(0 to data_width_const - 1)
         );
     end component;
     

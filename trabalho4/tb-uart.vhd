@@ -114,8 +114,17 @@ begin
         wait for 100 ns;
 
         -- send paralel data
-        data_in <= "11100101";
-        wait for 10 * clk_period;
+        data_in <= "11100101"; wait for clk_period;
+        data_in <= "00000000";
+
+        wait for 100 ns;
+        data_in <= "10101010"; wait for clk_period;
+        data_in <= "00000000";
+
+        wait for 100 ns;
+        data_in <= "11101010"; wait for clk_period;
+        data_in <= "00000000";
+        wait for 400 ns;
         assert false report "End of simulation" severity failure;
         -- End of simulation
         wait;

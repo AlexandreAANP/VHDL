@@ -47,23 +47,27 @@ begin
             case state is
                 when INIT =>
                     data_invalid <= '0';
+                    tx <= '1';
                     rx_data <= (others => '0');
                     tx_data <= (others => '0');
+                    data_out <= (others => '0');
                     index := 0;
+
                     if rx = '0' then
                         state <= BUSY;
                     elsif vector_is_not_zero(data_in) = '1' then
-                        tx_data <= data_in;
                         state <= BUSY;
+                        tx <= '0'; -- send the bit to start comunicate
+                        tx_data <= data_in; -- save data_in in tx_data 
                     end if;
 
                 when BUSY =>
-                    if vector_is_not_zero(data_in) = '1' then
+                    if vector_is_not_zero(tx_data) = '1' then
                         tx <= tx_data(index);
                         index := index + 1;
 
                         if index = data_width then
-                            state <= INIT;
+                            state <= SEND;
                         end if;
                     else
                         rx_data(index) <= rx;
@@ -75,13 +79,28 @@ begin
                     end if;
 
                 when SEND =>
-                    parity := rx_data(0);
-                    for i in 1 to data_width-1 loop
-                        parity := parity xor rx_data(i);
-                    end loop;
-                    data_invalid <= parity xor rx;
+
+                    if vector_is_not_zero(tx_data) = '1' then
+                        -- create parity bit
+                        parity := tx_data(0);
+                        for i in 1 to data_width - 1 loop
+                            parity := parity xor tx_data(i);
+                        end loop;
+                        
+                        tx <= parity;
+                        
+
+                    else
+
+                        parity := rx_data(0);
+                        for i in 1 to data_width-1 loop
+                            parity := parity xor rx_data(i);
+                        end loop;
+                        data_invalid <= parity xor rx; -- rx it's parity bit
+                        
+                        data_out <= rx_data;
                     
-                    data_out <= rx_data;
+                    end if;
                     
 
                     state <= INIT;

@@ -17,6 +17,7 @@ architecture testbench of uart_tb is
     signal data_invalid : std_logic;
     signal tx : std_logic;
     signal data_out : std_logic_vector(0 to data_width_const - 1);
+    signal start : std_logic := '0'; -- start signal
     
     constant clk_period : time := 10 ns;
     
@@ -29,6 +30,7 @@ architecture testbench of uart_tb is
             rst : in std_logic;
             en : in std_logic;
             rx : in std_logic;
+            start: in std_logic := '0'; -- start signal
             data_in : in std_logic_vector(0 to data_width_const - 1);
             is_busy: out std_logic;
             data_invalid: out std_logic;
@@ -44,6 +46,7 @@ begin
         rst => rst,
         en => en,
         rx => rx,
+        start => start, -- Start signal is not used in this testbench
         data_in => data_in,
         is_busy => is_busy,
         data_invalid => data_invalid,
@@ -76,9 +79,10 @@ begin
         wait for 20 ns;
         
         -- Start receiving data
+        start <= '1'; -- Start signal
         rx <= '0'; -- Start bit
         wait for clk_period;
-        
+        start <= '0'; -- Reset start signal
         -- Send data bits (example: 8-bit 10101010)
         rx <= '1'; wait for clk_period;  -- Bit 0
         rx <= '0'; wait for clk_period;  -- Bit 1
@@ -93,10 +97,11 @@ begin
         rx <= '1'; -- Stop bit
         wait for 5*clk_period;
 
-
+        start <= '1'; -- Start signal
         rx <= '0'; -- Start bit
         wait for clk_period;
-        
+        start <= '0'; -- Reset start signal
+
         -- Send data bits (example: 8-bit 10101010)
         rx <= '1'; wait for clk_period;  -- Bit 0
         rx <= '0'; wait for clk_period;  -- Bit 1
@@ -114,16 +119,18 @@ begin
         wait for 100 ns;
 
         -- send paralel data
+        start <= '1'; -- Start signal
         data_in <= "11100101"; wait for clk_period;
-        data_in <= "00000000";
-
+        start <= '0'; -- Reset start signal
         wait for 100 ns;
+        start <= '1'; -- Start signal
         data_in <= "10101010"; wait for clk_period;
-        data_in <= "00000000";
+        start <= '0'; -- Reset start signal
 
         wait for 100 ns;
+        start <= '1'; -- Start signal
         data_in <= "11101010"; wait for clk_period;
-        data_in <= "00000000";
+        start <= '0'; -- Reset start signal
         wait for 400 ns;
         assert false report "End of simulation" severity failure;
         -- End of simulation

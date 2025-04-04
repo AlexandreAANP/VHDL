@@ -10,6 +10,7 @@ entity uart is
         clk : in std_logic;
         rst : in std_logic;
         en : in std_logic;
+        start: in std_logic := '0'; -- start signal
         rx : in std_logic;   --reception
         data_in : in std_logic_vector(0 to data_width - 1 ) := (others => '0');
         is_busy: out std_logic := '0';
@@ -27,6 +28,7 @@ architecture Behavioral of uart is
 
     signal tx_data : std_logic_vector(0 to data_width - 1) := (others => '0');
     signal rx_data : std_logic_vector(0 to data_width - 1) := (others => '0');
+    signal receiving_in_series : std_logic := '0';
     
     function vector_is_not_zero(x_vector: std_logic_vector) return std_logic is
         variable result : std_logic := '0';
@@ -52,27 +54,32 @@ begin
                     tx_data <= (others => '0');
                     data_out <= (others => '0');
                     index := 0;
+                    if start = '1' then
+                        
+                        if rx = '0' then
+                            state <= BUSY;
+                            receiving_in_series <= '1';
+                        else
+                            state <= BUSY;
+                            receiving_in_series <= '0';
+                            tx <= '0'; -- send the bit to start comunicate
+                            tx_data <= data_in; -- save data_in in tx_data 
+                        end if;
 
-                    if rx = '0' then
-                        state <= BUSY;
-                    elsif vector_is_not_zero(data_in) = '1' then
-                        state <= BUSY;
-                        tx <= '0'; -- send the bit to start comunicate
-                        tx_data <= data_in; -- save data_in in tx_data 
                     end if;
 
                 when BUSY =>
-                    if vector_is_not_zero(tx_data) = '1' then
-                        tx <= tx_data(index);
+                    if receiving_in_series = '1' then
+                        rx_data(index) <= rx;
                         index := index + 1;
-
+                        
                         if index = data_width then
                             state <= SEND;
                         end if;
                     else
-                        rx_data(index) <= rx;
+                        tx <= tx_data(index);
                         index := index + 1;
-                        
+
                         if index = data_width then
                             state <= SEND;
                         end if;
@@ -80,17 +87,7 @@ begin
 
                 when SEND =>
 
-                    if vector_is_not_zero(tx_data) = '1' then
-                        -- create parity bit
-                        parity := tx_data(0);
-                        for i in 1 to data_width - 1 loop
-                            parity := parity xor tx_data(i);
-                        end loop;
-                        
-                        tx <= parity;
-                        
-
-                    else
+                    if receiving_in_series = '1' then
 
                         parity := rx_data(0);
                         for i in 1 to data_width-1 loop
@@ -99,6 +96,15 @@ begin
                         data_invalid <= parity xor rx; -- rx it's parity bit
                         
                         data_out <= rx_data;
+                    
+                    else
+                       -- create parity bit
+                       parity := tx_data(0);
+                       for i in 1 to data_width - 1 loop
+                           parity := parity xor tx_data(i);
+                       end loop;
+                       
+                       tx <= parity;
                     
                     end if;
                     

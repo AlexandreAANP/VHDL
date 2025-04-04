@@ -117,4 +117,6 @@ begin
         end if;
     end process;
 
+    is_busy <= '1' when state = BUSY else '0';
+
 end Behavioral;

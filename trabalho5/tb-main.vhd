@@ -1,0 +1,62 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity tb_main is
+end tb_main;
+
+architecture testbench of tb_main is
+    constant data_width_const : integer := 8;
+    constant clk_period : time := 10 ns;
+
+    signal clk : std_logic := '0';
+    signal rst : std_logic := '1';
+    signal en : std_logic := '0';
+    signal tx : std_logic;
+    component controller1
+        Port (
+            clk : in std_logic;
+            rst : in std_logic;
+            en : in std_logic;
+            -- rx : in std_logic;
+            tx : out std_logic
+        );
+    end component;
+    
+begin
+    -- Instantiate the UART module
+    uut: controller1 port map (
+        clk => clk,
+        rst => rst,
+        en => en,
+        tx => tx
+    );
+    
+    -- Clock process
+    clk_process: process
+    begin
+        while now < 10000 ns loop  -- Run simulation for a defined time
+            clk <= '0';
+            wait for clk_period / 2;
+            clk <= '1';
+            wait for clk_period / 2;
+        end loop;
+        assert false report "End of simulation" severity failure;
+    end process;
+    
+    -- Stimulus process
+    stimulus_process: process
+    begin
+        -- Reset sequence
+        rst <= '1';
+        wait for 20 ns;
+        rst <= '0';
+        en <= '1';
+        
+
+
+        -- assert false report "End of simulation" severity failure;
+        -- End of simulation
+        wait;
+    end process;
+end testbench;

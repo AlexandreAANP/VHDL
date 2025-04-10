@@ -22,7 +22,7 @@ end uart;
 
 
 architecture Behavioral of uart is
-    type uart_state is (INIT, BUSY, SEND);
+    type uart_state is (INIT, BUSY, CALC_PARITY);
     
     signal state : uart_state := INIT;
 
@@ -74,18 +74,18 @@ begin
                         index := index + 1;
                         
                         if index = data_width then
-                            state <= SEND;
+                            state <= CALC_PARITY;
                         end if;
                     else
                         tx <= tx_data(index);
                         index := index + 1;
 
                         if index = data_width then
-                            state <= SEND;
+                            state <= CALC_PARITY;
                         end if;
                     end if;
 
-                when SEND =>
+                when CALC_PARITY =>
 
                     if receiving_in_series = '1' then
 
@@ -116,5 +116,7 @@ begin
             end case;
         end if;
     end process;
+
+    is_busy <= '1' when state = BUSY else '0';
 
 end Behavioral;

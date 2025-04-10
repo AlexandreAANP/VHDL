@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 
-entity chiper is
+entity cipher is
     Port ( 
         bit_in : in std_logic;
         clk: in std_logic;
@@ -10,10 +10,10 @@ entity chiper is
         en: in std_logic;
         bit_out : out std_logic
     );
-end chiper;
+end cipher;
 
 
-architecture Behavioral of chiper is
+architecture Behavioral of cipher is
     signal key_bit : std_logic;
 
     component lfsr

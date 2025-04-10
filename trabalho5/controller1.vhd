@@ -15,15 +15,25 @@ end controller1;
 architecture Behavioral of controller1 is
     constant ROM_SIZE :integer := 50; -- how many elements rom have
     constant ROM_DATA_SIZE : integer := 16;
-    type state_type is (INIT, READING, SENDING, DONE);
+    type state_type is (INIT, READING, SENDING, ENCRIPTING, SPLITING, WAIT_FOR_UART, DONE);
     signal state : state_type := INIT;
     signal rom_addr : unsigned(5 downto 0);
     signal rom_data_out : signed(ROM_DATA_SIZE-1 downto 0);
     signal index : integer := 0;
 
-    signal chyper_in : std_logic;
+    signal chiper_in : std_logic;
+    signal chiper_out : std_logic;
+    signal chiper_en : std_logic := '0';
+    signal encripted_data : std_logic_vector(ROM_DATA_SIZE-1 downto 0);
+    -- signal chiper_rst : std_logic;
     -- signal start_rom_uart : std_logic := '0';
 
+
+    signal uart_in_data : std_logic_vector(ROM_DATA_SIZE/2 - 1 downto 0);
+    signal uart_busy : std_logic;
+    signal uart_invalid :std_logic;
+    signal uart_start : std_logic;
+    signal uart_rx : std_logic := '1'; -- set '1' for uart doesn't start serial receiving
 
     component controller1_rom is 
         Port(
@@ -32,41 +42,60 @@ architecture Behavioral of controller1 is
         );
     end component;
 
-    -- component uart is 
-    --     Port(
-    --         clk : in std_logic;
-    --         rst : in std_logic;
-    --         en : in std_logic;
-    --         start: in std_logic := '0';
-    --         rx : in std_logic;
-    --         data_in : in std_logic_vector(0 to 15) := (others => '0');
-    --         is_busy: out std_logic := '0';
-    --         data_invalid: out std_logic := '0';
-    --         tx : out std_logic := '0';
-    --         data_out : out std_logic_vector(0 to 15) := (others => '0')
-    --     );
-    -- end component;
+    component cipher is
+        Port(
+            bit_in : in std_logic;
+            clk: in std_logic;
+            rst: in std_logic;
+            en: in std_logic;
+            bit_out : out std_logic
+        );
+    end component;
+
+    component uart is 
+        Port(
+            clk : in std_logic;
+            rst : in std_logic;
+            en : in std_logic;
+            start: in std_logic;
+            rx : in std_logic;
+            data_in : in std_logic_vector(0 to ROM_DATA_SIZE/2 - 1);
+            is_busy: out std_logic;
+            data_invalid: out std_logic;
+            tx : out std_logic;
+            data_out : out std_logic_vector(0 to ROM_DATA_SIZE/2 - 1)
+        );
+    end component;
 begin
 
-    rom: controller1_rom port map (
+    uui_rom: controller1_rom port map (
         addr => rom_addr,
         data_out => rom_data_out
     );
 
-    -- rom_uart: uart port map (
-    --     clk => clk,
-    --     rst => rst,
-    --     en => en,
-    --     start => start_rom_uart,
-    --     rx => _rom_uart_rx,
-    --     data_in => rom_uart_data_in,
-    --     is_busy => rom_uart_busy,
-    --     data_invalid => rom_uart_invalid,
-    --     tx => chiper_in,
-    -- );
+    uui_chiper: cipher port map (
+        bit_in => chiper_in,
+        clk => clk,
+        rst => rst,
+        en => chiper_en,
+        bit_out => chiper_out
+    );
 
-    controller_process: process(clk)
+    uui_uart: uart port map (
+        clk => clk,
+        rst => rst,
+        en => en,
+        start => uart_start,
+        rx => uart_rx,
+        data_in => uart_in_data,
+        is_busy => uart_busy,
+        data_invalid => uart_invalid,
+        tx => tx
+    );
+
+    controller_process: process(clk, uart_busy)
     variable index_bit : integer := 0;
+    variable is_first_part : std_logic := '1';
     begin
         if rst = '1' then
             state <= READING;
@@ -78,19 +107,47 @@ begin
                     state <= SENDING;
                     
                 when SENDING =>
-                    
-                    chyper_in <= rom_data_out(ROM_DATA_SIZE-1-index_bit);
+                    chiper_en <= '1'; -- enabling chiper
+                    chiper_in <= rom_data_out(ROM_DATA_SIZE-1-index_bit);
                     index_bit := index_bit + 1;
+                    state <= ENCRIPTING;
+
                     
-                    if index_bit = ROM_DATA_SIZE-1 then
+                    if index = ROM_SIZE then
+                        state <= DONE;
+                    end if;
+                    
+                when ENCRIPTING =>
+                    encripted_data(index_bit-1) <= chiper_out;
+                    
+                    if index_bit = ROM_DATA_SIZE then
                         index_bit := 0;
                         index <= index + 1;
-                        if index = ROM_SIZE then
-                            state <= DONE;
-                        else
-                            state <= READING;
-                        end if;
+
+                        state <= SPLITING;
+                    else
+                        state <= SENDING; 
                     end if;
+                    
+                when SPLITING =>
+                    uart_start <= '1';
+                        --split content and sent to uart
+
+                    if is_first_part = '1' then
+                        uart_in_data <= encripted_data(ROM_DATA_SIZE/2 - 1 downto 0);
+                        state <= WAIT_FOR_UART;
+                        is_first_part := '0';
+                    else
+                        uart_in_data <= encripted_data(ROM_DATA_SIZE - 1 downto ROM_DATA_SIZE/2);
+                        uart_start <= '0';
+                        is_first_part := '1';
+                        state <= READING;
+                    end if;
+                when WAIT_FOR_UART =>
+                    if uart_busy = '0' then
+                        state <= SPLITING;
+                    end if;
+                
                 when others =>
                     assert false report "End of simulation" severity failure;
             end case;

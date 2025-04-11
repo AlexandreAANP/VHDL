@@ -96,6 +96,7 @@ begin
     controller_process: process(clk, uart_busy)
     variable index_bit : integer := 0;
     variable is_first_part : std_logic := '1';
+    variable uart_already_start : std_logic := '0';
     begin
         if rst = '1' then
             state <= READING;
@@ -134,17 +135,24 @@ begin
                         --split content and sent to uart
 
                     if is_first_part = '1' then
-                        uart_in_data <= encripted_data(ROM_DATA_SIZE/2 - 1 downto 0);
+                        uart_in_data <= encripted_data(ROM_DATA_SIZE - 1 downto ROM_DATA_SIZE/2);
                         state <= WAIT_FOR_UART;
                         is_first_part := '0';
                     else
-                        uart_in_data <= encripted_data(ROM_DATA_SIZE - 1 downto ROM_DATA_SIZE/2);
+                        uart_in_data <= encripted_data(ROM_DATA_SIZE/2 - 1 downto 0);
                         uart_start <= '0';
                         is_first_part := '1';
                         state <= READING;
                     end if;
                 when WAIT_FOR_UART =>
-                    if uart_busy = '0' then
+                    -- wait to start the busy state before wait the finished
+
+                    if uart_busy = '1' then
+                        uart_already_start := '1';
+                    end if;
+
+                    if  uart_already_start = '1' and uart_busy = '0' then
+                        uart_already_start := '0';
                         state <= SPLITING;
                     end if;
                 

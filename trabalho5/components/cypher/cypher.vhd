@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 
-entity cipher is
+entity cypher is
     Port ( 
         bit_in : in std_logic;
         clk: in std_logic;
@@ -10,10 +10,10 @@ entity cipher is
         en: in std_logic;
         bit_out : out std_logic
     );
-end cipher;
+end cypher;
 
 
-architecture Behavioral of cipher is
+architecture Behavioral of cypher is
     signal key_bit : std_logic;
 
     component lfsr

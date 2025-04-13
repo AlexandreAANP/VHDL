@@ -13,13 +13,39 @@ architecture testbench of tb_main is
     signal rst : std_logic := '1';
     signal en : std_logic := '0';
     signal tx : std_logic;
+
+    signal uart_in_data : std_logic_vector(data_width_const - 1 downto 0);
+    signal uart_busy : std_logic;
+    signal uart_invalid :std_logic;
+    signal start_uart : std_logic;
+    signal uart_rx : std_logic;
+    signal uart_tx : std_logic;
+    signal uart_receiving_in_serial: std_logic := '1'; --the uart will always receive in parell
     component controller1
         Port (
             clk : in std_logic;
             rst : in std_logic;
             en : in std_logic;
             -- rx : in std_logic;
-            tx : out std_logic
+            tx : out std_logic;
+            start_uart: out std_logic
+        );
+    end component;
+
+
+    component uart is 
+        Port(
+            clk : in std_logic;
+            rst : in std_logic;
+            en : in std_logic;
+            start: in std_logic;
+            receiving_in_serial: in std_logic;
+            rx : in std_logic;
+            data_in : in std_logic_vector(0 to data_width_const - 1);
+            is_busy: out std_logic;
+            data_invalid: out std_logic;
+            tx : out std_logic;
+            data_out : out std_logic_vector(0 to data_width_const - 1)
         );
     end component;
     
@@ -29,13 +55,27 @@ begin
         clk => clk,
         rst => rst,
         en => en,
-        tx => tx
+        tx => uart_rx,
+        start_uart => start_uart
     );
     
+    uui_uart: uart port map (
+        clk => clk,
+        rst => rst,
+        en => en,
+        start => start_uart,
+        receiving_in_serial => uart_receiving_in_serial,
+        rx => uart_rx,
+        data_in => uart_in_data,
+        is_busy => uart_busy,
+        data_invalid => uart_invalid,
+        tx => uart_tx
+    );
+
     -- Clock process
     clk_process: process
     begin
-        while now < 10000 ns loop  -- Run simulation for a defined time
+        while true loop  -- Run simulation for a defined time
             clk <= '0';
             wait for clk_period / 2;
             clk <= '1';
@@ -52,7 +92,6 @@ begin
         wait for 20 ns;
         rst <= '0';
         en <= '1';
-        
 
 
         -- assert false report "End of simulation" severity failure;

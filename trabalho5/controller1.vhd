@@ -8,7 +8,8 @@ entity controller1 is
         rst: in std_logic;
         en: in std_logic;
         -- rx: in std_logic;
-        tx: out std_logic
+        tx: out std_logic;
+        start_uart : out std_logic
     );
 end controller1;
 
@@ -21,19 +22,20 @@ architecture Behavioral of controller1 is
     signal rom_data_out : signed(ROM_DATA_SIZE-1 downto 0);
     signal index : integer := 0;
 
-    signal chiper_in : std_logic;
-    signal chiper_out : std_logic;
-    signal chiper_en : std_logic := '0';
-    signal encripted_data : std_logic_vector(ROM_DATA_SIZE-1 downto 0);
-    -- signal chiper_rst : std_logic;
+    signal cypher_in : std_logic;
+    signal cypher_out : std_logic;
+    signal cypher_en : std_logic := '0';
+    signal encripted_data : std_logic_vector(ROM_DATA_SIZE/2-1 downto 0);
+    -- signal cypher_rst : std_logic;
     -- signal start_rom_uart : std_logic := '0';
 
 
     signal uart_in_data : std_logic_vector(ROM_DATA_SIZE/2 - 1 downto 0);
     signal uart_busy : std_logic;
     signal uart_invalid :std_logic;
-    signal uart_start : std_logic;
+    signal uart_start : std_logic := '0';
     signal uart_rx : std_logic := '1'; -- set '1' for uart doesn't start serial receiving
+    signal uart_receiving_in_serial : std_logic := '0'; -- in this case the uart will never receive in serial
 
     component controller1_rom is 
         Port(
@@ -42,7 +44,7 @@ architecture Behavioral of controller1 is
         );
     end component;
 
-    component cipher is
+    component cypher is
         Port(
             bit_in : in std_logic;
             clk: in std_logic;
@@ -58,6 +60,7 @@ architecture Behavioral of controller1 is
             rst : in std_logic;
             en : in std_logic;
             start: in std_logic;
+            receiving_in_serial: in std_logic;
             rx : in std_logic;
             data_in : in std_logic_vector(0 to ROM_DATA_SIZE/2 - 1);
             is_busy: out std_logic;
@@ -73,12 +76,12 @@ begin
         data_out => rom_data_out
     );
 
-    uui_chiper: cipher port map (
-        bit_in => chiper_in,
+    uui_cypher: cypher port map (
+        bit_in => cypher_in,
         clk => clk,
         rst => rst,
-        en => chiper_en,
-        bit_out => chiper_out
+        en => cypher_en,
+        bit_out => cypher_out
     );
 
     uui_uart: uart port map (
@@ -86,6 +89,7 @@ begin
         rst => rst,
         en => en,
         start => uart_start,
+        receiving_in_serial => uart_receiving_in_serial,
         rx => uart_rx,
         data_in => uart_in_data,
         is_busy => uart_busy,
@@ -93,8 +97,10 @@ begin
         tx => tx
     );
 
+    start_uart <= uart_start;
     controller_process: process(clk, uart_busy)
-    variable index_bit : integer := 0;
+    variable rom_index : integer := 0;
+    variable encripted_index : integer := 0;
     variable is_first_part : std_logic := '1';
     variable uart_already_start : std_logic := '0';
     begin
@@ -108,9 +114,13 @@ begin
                     state <= SENDING;
                     
                 when SENDING =>
-                    chiper_en <= '1'; -- enabling chiper
-                    chiper_in <= rom_data_out(ROM_DATA_SIZE-1-index_bit);
-                    index_bit := index_bit + 1;
+                    cypher_en <= '1'; -- enabling cypher
+                    cypher_in <= rom_data_out(ROM_DATA_SIZE-1-rom_index);
+                    rom_index := rom_index + 1;
+                    if rom_index = ROM_DATA_SIZE then
+                        rom_index := 0;
+                        index <= index + 1;
+                    end if;
                     state <= ENCRIPTING;
 
                     
@@ -119,42 +129,18 @@ begin
                     end if;
                     
                 when ENCRIPTING =>
-                    encripted_data(index_bit-1) <= chiper_out;
-                    
-                    if index_bit = ROM_DATA_SIZE then
-                        index_bit := 0;
-                        index <= index + 1;
-
-                        state <= SPLITING;
-                    else
-                        state <= SENDING; 
-                    end if;
-                    
-                when SPLITING =>
-                    uart_start <= '1';
-                        --split content and sent to uart
-
-                    if is_first_part = '1' then
-                        uart_in_data <= encripted_data(ROM_DATA_SIZE - 1 downto ROM_DATA_SIZE/2);
-                        state <= WAIT_FOR_UART;
-                        is_first_part := '0';
-                    else
+                    if encripted_index = ROM_DATA_SIZE/2 then
                         uart_in_data <= encripted_data(ROM_DATA_SIZE/2 - 1 downto 0);
+                        uart_start <= '1';
+                        encripted_data(ROM_DATA_SIZE/2 - 1 downto 0) <= (others => '0');
+                        encripted_index := 0; 
+                    else
+                        encripted_data(encripted_index) <= cypher_out;
                         uart_start <= '0';
-                        is_first_part := '1';
-                        state <= READING;
+                        encripted_index := encripted_index + 1;
                     end if;
-                when WAIT_FOR_UART =>
-                    -- wait to start the busy state before wait the finished
-
-                    if uart_busy = '1' then
-                        uart_already_start := '1';
-                    end if;
-
-                    if  uart_already_start = '1' and uart_busy = '0' then
-                        uart_already_start := '0';
-                        state <= SPLITING;
-                    end if;
+                    state <= SENDING; 
+                
                 
                 when others =>
                     assert false report "End of simulation" severity failure;

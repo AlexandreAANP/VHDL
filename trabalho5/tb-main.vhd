@@ -21,6 +21,8 @@ architecture testbench of tb_main is
     signal uart_rx : std_logic;
     signal uart_tx : std_logic;
     signal uart_receiving_in_serial: std_logic := '1'; --the uart will always receive in parell
+    
+    signal encripted_rx_data : std_logic;
     component controller1
         Port (
             clk : in std_logic;
@@ -29,6 +31,16 @@ architecture testbench of tb_main is
             -- rx : in std_logic;
             tx : out std_logic;
             start_uart: out std_logic
+        );
+    end component;
+
+    component controller2
+        Port (
+            clk : in std_logic;
+            rst : in std_logic;
+            en : in std_logic;
+            rx : in std_logic;
+            start_uart: in std_logic
         );
     end component;
 
@@ -51,27 +63,23 @@ architecture testbench of tb_main is
     
 begin
     -- Instantiate the UART module
-    uut: controller1 port map (
+    uui_controller1: controller1 port map (
         clk => clk,
         rst => rst,
         en => en,
-        tx => uart_rx,
+        tx => encripted_rx_data,
         start_uart => start_uart
     );
-    
-    uui_uart: uart port map (
+
+    uui_controller2: controller2 port map(
         clk => clk,
         rst => rst,
         en => en,
-        start => start_uart,
-        receiving_in_serial => uart_receiving_in_serial,
-        rx => uart_rx,
-        data_in => uart_in_data,
-        is_busy => uart_busy,
-        data_invalid => uart_invalid,
-        tx => uart_tx
-    );
+        start_uart => start_uart,
+        rx => encripted_rx_data
 
+    );
+    
     -- Clock process
     clk_process: process
     begin

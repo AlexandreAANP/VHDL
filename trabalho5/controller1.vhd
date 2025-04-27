@@ -14,7 +14,7 @@ entity controller1 is
 end controller1;
 
 architecture Behavioral of controller1 is
-    constant ROM_SIZE :integer := 50; -- how many elements rom have
+    constant ROM_SIZE :integer := 51; -- how many elements rom have
     constant ROM_DATA_SIZE : integer := 16;
     type state_type is (INIT, READING, ENCRIPTING, SENDING, DONE);
     signal state : state_type := INIT;

@@ -119,16 +119,20 @@ begin
                     else
                         rom_addr <= to_unsigned(index, rom_addr'length);
                         state <= ENCRIPTING;
-                        cypher_en <= '1';
-                        rom_index <= 1;
+                        
+                        rom_index <= 0;
                         encripted_index <= 0;
-                        cypher_in <= rom_data_out(0);
+                        -- cypher_in <= rom_data_out(0);
                     end if;
                     
                 when ENCRIPTING =>
                     
 
-                    if encripted_index = 0  then
+                    if rom_index = 0  then
+                        cypher_en <= '1';
+                        cypher_in <= rom_data_out(rom_index);
+                        rom_index <= rom_index +1;
+                    elsif rom_index = 1 then
                         encripted_data(encripted_index) <= cypher_out;
                         cypher_in <= rom_data_out(rom_index);
                         rom_index <= rom_index +1;
@@ -173,7 +177,7 @@ begin
                         end if;    
                 
                 when others =>
-                    assert false report "End of simulation" severity failure;
+                    -- assert false report "End of simulation" severity failure;
             end case;
         end if;
     end process;

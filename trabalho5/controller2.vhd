@@ -20,7 +20,7 @@ architecture Behavioral of controller2 is
     constant ROM_DATA_SIZE : integer := 16;
     constant RECEIVING_IN_SERIAL : std_logic := '1';
     
-    type state_type is (INIT, READ_UART, FILTER);
+    type state_type is (INIT, READ_UART,DECRIPTING, CHECK_PAIR, FILTER);
     signal state : state_type := INIT;
 
     signal cypher_en :std_logic := '0';
@@ -29,14 +29,17 @@ architecture Behavioral of controller2 is
 
 
     signal uart_data_in: std_logic_vector(0 to ROM_DATA_SIZE/2 - 1) := (others=>'0');
-    signal uart_output : std_logic_vector(0 to ROM_DATA_SIZE/2 - 1);
+    signal uart_output : std_logic_vector(ROM_DATA_SIZE/2 - 1 downto 0);
     signal uart_busy: std_logic;
     signal uart_invalid: std_logic;
     signal uart_tx: std_logic;
-    signal uart_rx: std_logic;
+    
+    type sample_array is array (0 to 50) of signed(15 downto 0);
+    signal filter_data : sample_array; -- := (others => to_signed(0, 15));
 
-    signal data_encripted : std_logic_vector(0 to ROM_DATA_SIZE/2-1);
-    signal data_decripted: std_logic_vector(0 to ROM_DATA_SIZE-1);
+    signal data_encripted : std_logic_vector(ROM_DATA_SIZE/2-1 downto 0);
+    signal data_decripted: std_logic_vector(ROM_DATA_SIZE-1 downto 0);
+    signal data_decripted_fix: std_logic_vector(ROM_DATA_SIZE-1 downto 0);
 
     component uart is 
         Port(
@@ -92,53 +95,66 @@ begin
     variable index : integer := 0;
     variable its_first_8_bits : std_logic := '1';
     variable uart_already_start : std_logic := '0';
+    variable index_filter : integer := -1;
     begin
         if rst='1' then
             state <= INIT;
-        elsif rising_edge(clk) then
+        elsif falling_edge(clk) then
             if en='1' then
                 case state is
                   when INIT =>
-                        if start_uart = '1' then
-                            uart_already_start := '1';
-                        elsif uart_already_start = '1' and uart_busy = '0' then
-                            state <= READ_UART;
+                        if uart_already_start = '1' and uart_busy = '0' then
+                            state <= DECRIPTING;
+                        elsif uart_busy = '1' then
+                            uart_already_start := '1';    
                         end if;
-
-                    when READ_UART =>
+                    
+                    when DECRIPTING =>
                         if index = 0 then
                             cypher_en <= '1';
                             data_encripted <= uart_output;
-                            cypher_in <= uart_output(index);
-                            index := index +1;
-
-                        elsif index = 8 then
-                            index := 0;
                             if its_first_8_bits = '1' then
-                                data_decripted(7) <= cypher_out;
-                                its_first_8_bits := '0';
-                            else
-                                its_first_8_bits := '1';
-                                data_decripted(15) <= cypher_out;
+                                if index_filter > -1 then
+                                    filter_data(index_filter) <= signed(data_decripted);
+                                end if;
+                                if index_filter = 50 then
+                                    state <= FILTER;
+                                end if;
+                                index_filter := index_filter + 1;
+                                data_decripted <= (others => 'U');
                             end if;
-
-                            cypher_en <= '0';
-                            state <= INIT;
-                            
-                        
-                        else
+                            cypher_in <= uart_output(index);
+                            index := index + 1;
+                        elsif index = 1  then
                             cypher_in <= data_encripted(index);
                             if its_first_8_bits = '1' then
-                                data_decripted(index - 1) <= cypher_out;
+                                data_decripted(0) <= cypher_out;
                             else
-                                data_decripted(8+index - 1) <= cypher_out;
+                                data_decripted(8) <= cypher_out;
                             end if;
-                            index := index +1;
-                        end if;
+                            index := index + 1;
                         
-                        
-            
-                        
+                            elsif index = 8 then
+                                index := 0;
+                                if its_first_8_bits = '1' then
+                                    data_decripted(7) <= cypher_out;
+                                    its_first_8_bits := '0';
+                                else
+                                    its_first_8_bits := '1';
+                                    data_decripted(15) <= cypher_out;
+                                end if;
+                                cypher_en <= '0';
+                                state <= INIT;
+                                
+                            else
+                                cypher_in <= data_encripted(index);
+                                if its_first_8_bits = '1' then
+                                    data_decripted(index - 1) <= cypher_out;
+                                else
+                                    data_decripted(8+index - 1) <= cypher_out;
+                                end if;
+                                index := index +1;
+                            end if;
                             
                    when others =>
                         assert false report "End of simulation" severity failure;

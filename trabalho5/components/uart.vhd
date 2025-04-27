@@ -13,11 +13,11 @@ entity uart is
         start: in std_logic := '0'; -- start signal
         receiving_in_serial: in std_logic;
         rx : in std_logic;   --reception
-        data_in : in std_logic_vector(0 to data_width - 1 ) := (others => '0');
+        data_in : in std_logic_vector(data_width - 1  downto 0) := (others => '0');
         is_busy: out std_logic := '0';
         data_invalid: out std_logic := '0';
         tx : out std_logic := '0'; --transmission
-        data_out : out std_logic_vector(0 to data_width - 1 ) := (others => '0')
+        data_out : out std_logic_vector(data_width - 1  downto 0 ) := (others => '0')
     );
 end uart;
 
@@ -27,8 +27,8 @@ architecture Behavioral of uart is
     
     signal state : uart_state := INIT;
 
-    signal tx_data : std_logic_vector(0 to data_width - 1) := (others => '0');
-    signal rx_data : std_logic_vector(0 to data_width - 1) := (others => '0');
+    signal tx_data : std_logic_vector(data_width - 1  downto 0) := (others => 'U');
+    signal rx_data : std_logic_vector(data_width - 1  downto 0) := (others => 'U');
 
 begin
 
@@ -41,9 +41,9 @@ begin
                 when INIT =>
                     data_invalid <= '0';
                     tx <= '1';
-                    rx_data <= (others => '0');
-                    tx_data <= (others => '0');
-                    data_out <= (others => '0');
+                    rx_data <= (others => 'U');
+                    tx_data <= (others => 'U');
+                    data_out <= (others => 'U');
                     index := 0;
                     if start = '1' then
                         

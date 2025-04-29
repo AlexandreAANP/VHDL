@@ -39,11 +39,15 @@ begin
     process(clk, rst, en, key_bit)
     begin
         if rst = '1' then
-            bit_out <= '0';
+            -- seed <= seed;
+            -- bit_out <= '0';
         elsif rising_edge(clk) then
             if en = '1' then
                 bit_out <= bit_in xor key_bit;
+            else
+                bit_out <= 'U';    
             end if;
+
         end if;
     end process;
 

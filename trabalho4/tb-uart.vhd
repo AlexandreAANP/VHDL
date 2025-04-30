@@ -100,10 +100,8 @@ begin
         wait for 20 ns;
         
         -- Start receiving data
-        start_1 <= '1'; -- Start signal
         rx_1 <= '0'; -- Start bit
         wait for clk_period;
-        start_1 <= '0'; -- Reset start signal
         -- Send data bits (example: 8-bit 10101010)
         rx_1 <= '1'; wait for clk_period;  -- Bit 0
         rx_1 <= '0'; wait for clk_period;  -- Bit 1
@@ -116,14 +114,10 @@ begin
         rx_1 <= '1'; wait for clk_period;  -- parity it
         
         rx_1 <= '1'; -- Stop bit
-        start_2 <= '1';
         wait for clk_period;
-        start_2 <= '0';
 
-        start_1 <= '1'; -- Start signal
         rx_1 <= '0'; -- Start bit
         wait for clk_period;
-        start_1 <= '0'; -- Reset start signal
 
         -- Send data bits (example: 8-bit 10101010)
         rx_1 <= '1'; wait for clk_period;  -- Bit 0
@@ -140,6 +134,7 @@ begin
         start_2 <= '1';
         wait for clk_period;
         start_2 <= '0';
+        
         -- Wait and observe output
         wait for 100 ns;
 

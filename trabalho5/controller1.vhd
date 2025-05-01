@@ -7,32 +7,34 @@ entity controller1 is
         clk: in std_logic;
         rst: in std_logic;
         en: in std_logic;
-        -- rx: in std_logic;
         tx: out std_logic;
         start_uart : out std_logic
     );
 end controller1;
 
 architecture Behavioral of controller1 is
-    constant ROM_SIZE :integer := 51; -- how many elements rom have
-    constant ROM_DATA_SIZE : integer := 16;
+    constant ROM_SIZE :integer := 51; -- how many elements filter rom have
+    constant ROM_ADDR_SIZE :integer := 6;
+    constant ROM_DATA_SIZE : integer := 16; -- number of bits of rom output
+    constant UART_DATA_SIZE : integer := 8; -- number of bits of uart in
+
+
     type state_type is (INIT, READING, ENCRIPTING, SENDING, DONE);
     signal state : state_type := INIT;
-    signal rom_addr : unsigned(5 downto 0);
-    signal rom_data_out : signed(ROM_DATA_SIZE-1 downto 0);
-    signal rom_index : integer := 0;
+    
+    signal rom_addr : unsigned(ROM_ADDR_SIZE - 1 downto 0);
+    signal rom_data_out : signed(ROM_DATA_SIZE - 1 downto 0);
+    signal rom_data_index : integer := 0;
+    
     signal index : integer := 0;
 
     signal cypher_in : std_logic;
     signal cypher_out : std_logic;
     signal cypher_en : std_logic := '0';
-    signal encripted_data : std_logic_vector(ROM_DATA_SIZE/2-1 downto 0);
+    signal encripted_data : std_logic_vector(UART_DATA_SIZE - 1 downto 0);
     signal encripted_index: integer :=0;
-    -- signal cypher_rst : std_logic;
-    -- signal start_rom_uart : std_logic := '0';
 
-
-    signal uart_in_data : std_logic_vector(ROM_DATA_SIZE/2 - 1 downto 0);
+    signal uart_in_data : std_logic_vector(UART_DATA_SIZE - 1 downto 0);
     signal uart_busy : std_logic;
     signal uart_invalid :std_logic;
     signal uart_start : std_logic := '0';
@@ -120,7 +122,7 @@ begin
                         rom_addr <= to_unsigned(index, rom_addr'length);
                         state <= ENCRIPTING;
                         
-                        rom_index <= 0;
+                        rom_data_index <= 0;
                         encripted_index <= 0;
                         -- cypher_in <= rom_data_out(0);
                     end if;
@@ -128,14 +130,14 @@ begin
                 when ENCRIPTING =>
                     
 
-                    if rom_index = 0  then
+                    if rom_data_index = 0  then
                         cypher_en <= '1';
-                        cypher_in <= rom_data_out(rom_index);
-                        rom_index <= rom_index +1;
-                    elsif rom_index = 1 then
+                        cypher_in <= rom_data_out(rom_data_index);
+                        rom_data_index <= rom_data_index +1;
+                    elsif rom_data_index = 1 then
                         encripted_data(encripted_index) <= cypher_out;
-                        cypher_in <= rom_data_out(rom_index);
-                        rom_index <= rom_index +1;
+                        cypher_in <= rom_data_out(rom_data_index);
+                        rom_data_index <= rom_data_index +1;
                         encripted_index <= encripted_index + 1;   
 
                        
@@ -143,9 +145,9 @@ begin
                     elsif encripted_index = 7 then
                         encripted_data(encripted_index) <= cypher_out;
                         test_index <= cypher_out;
-                        if rom_index < 15 then
-                            cypher_in <= rom_data_out(rom_index);
-                            rom_index <= rom_index +1;
+                        if rom_data_index < 15 then
+                            cypher_in <= rom_data_out(rom_data_index);
+                            rom_data_index <= rom_data_index +1;
                         end if;
                         cypher_en <= '0';
                         encripted_index <= 0;
@@ -155,9 +157,9 @@ begin
                     else 
                         encripted_data(encripted_index) <= cypher_out;
                         test_index <= cypher_out;
-                        if rom_index < 16 then
-                            cypher_in <= rom_data_out(rom_index);
-                            rom_index <= rom_index +1;
+                        if rom_data_index < 16 then
+                            cypher_in <= rom_data_out(rom_data_index);
+                            rom_data_index <= rom_data_index +1;
                         end if;
                         encripted_index <= encripted_index +1;
                         
@@ -168,7 +170,7 @@ begin
                         encripted_data <= (others => 'U');
 
                         uart_start <= '1';
-                        if rom_index > 15 then
+                        if rom_data_index > 15 then
                             state <= READING;
                             index <= index +1;
                         else 

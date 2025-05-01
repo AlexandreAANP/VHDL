@@ -43,23 +43,6 @@ architecture testbench of tb_main is
             start_uart: in std_logic
         );
     end component;
-
-
-    component uart is 
-        Port(
-            clk : in std_logic;
-            rst : in std_logic;
-            en : in std_logic;
-            start: in std_logic;
-            receiving_in_serial: in std_logic;
-            rx : in std_logic;
-            data_in : in std_logic_vector(0 to data_width_const - 1);
-            is_busy: out std_logic;
-            data_invalid: out std_logic;
-            tx : out std_logic;
-            data_out : out std_logic_vector(0 to data_width_const - 1)
-        );
-    end component;
     
 begin
     -- Instantiate the UART module
@@ -100,8 +83,6 @@ begin
         wait for 20 ns;
         rst <= '0';
         en <= '1';
-
-
         -- assert false report "End of simulation" severity failure;
         -- End of simulation
         wait;

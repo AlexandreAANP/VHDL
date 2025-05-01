@@ -12,37 +12,44 @@ entity controller1 is
 end controller1;
 
 architecture Behavioral of controller1 is
+    -- CONSTANTS
+    -- You can change this constantes to have the disered behavior for data bigger or smaller
     constant ROM_SIZE :integer := 51; -- how many elements filter rom have
-    constant ROM_ADDR_SIZE :integer := 6;
-    constant ROM_DATA_SIZE : integer := 16; -- number of bits of rom output
+    constant ROM_ADDR_SIZE :integer := 6; -- if you change this you need to change the rom component itself
+    constant ROM_DATA_SIZE : integer := 16; -- number of bits of rom output; -- if you change this you need to change the rom component itself
     constant UART_DATA_SIZE : integer := 8; -- number of bits of uart in
 
-
+    -- POSSIBLE STATES
     type state_type is (INIT, READING, ENCRIPTING, SENDING, DONE);
     signal state : state_type := INIT;
     
+    -- READING SIGNALS
     signal rom_addr : unsigned(ROM_ADDR_SIZE - 1 downto 0);
     signal rom_data_out : signed(ROM_DATA_SIZE - 1 downto 0);
     signal rom_data_index : integer := 0;
-    
-    signal index : integer := 0;
+    signal rom_index : integer := 0;
 
+    -- ENCRITPING SIGNALS
     signal cypher_in : std_logic;
     signal cypher_out : std_logic;
     signal cypher_en : std_logic := '0';
     signal encripted_data : std_logic_vector(UART_DATA_SIZE - 1 downto 0);
     signal encripted_index: integer :=0;
 
+    -- SENDING SIGNALS
     signal uart_in_data : std_logic_vector(UART_DATA_SIZE - 1 downto 0);
     signal uart_busy : std_logic;
     signal uart_invalid :std_logic;
     signal uart_start : std_logic := '0';
     signal uart_rx : std_logic := '1'; -- set '1' for uart doesn't start serial receiving
-    signal test_index : std_logic;
 
     component controller1_rom is 
+        GENERIC(
+            addr_size : integer := ROM_ADDR_SIZE;
+            data_size : integer := ROM_DATA_SIZE 
+        );
         Port(
-            addr : in unsigned(5 downto 0);
+            addr : in unsigned(ROM_ADDR_SIZE - 1 downto 0);
             data_out : out signed(ROM_DATA_SIZE-1 downto 0)
         );
     end component;
@@ -98,87 +105,74 @@ begin
         tx => tx
     );
 
-    -- start_uart <= uart_start;
-    controller_process: process(clk, uart_busy)
-    
-    -- variable encripted_index : integer := 0;
-    variable is_first_part : std_logic := '1';
-    variable uart_already_start : std_logic := '0';
-    variable save_bit_encripted : std_logic :='0';
+    controller_process: process(clk)
     begin
         if rst = '1' then
             state <= READING;
-            index <= 0;
+            -- reset all indexs
+            rom_index <= 0;
+            rom_data_index <= 0;
+            encripted_index <= 0;
         elsif falling_edge(clk) then
             case state is
                 when READING =>
-                    
-                    if index = ROM_SIZE then
-                        -- uart_start <= '0';
+                    if rom_index = ROM_SIZE then
                         state <= DONE;
                     else
-                        rom_addr <= to_unsigned(index, rom_addr'length);
+                        rom_addr <= to_unsigned(rom_index, rom_addr'length);
                         state <= ENCRIPTING;
-                        
+                        -- reset indexs
                         rom_data_index <= 0;
                         encripted_index <= 0;
                     end if;
-                    
                 when ENCRIPTING =>
-                    -- uart_start <= '0';
-
+                    -- first iteraction still doesn't receive the out bit of cypher
+                    -- so will be ignore and only send bit to cypher
                     if rom_data_index = 0  then
                         cypher_en <= '1';
                         cypher_in <= rom_data_out(rom_data_index);
                         rom_data_index <= rom_data_index +1;
-                    elsif rom_data_index = 1 then
+                    
+                    -- when encripted_index = 7 = UART_DATA_SIZE - 1
+                    -- the accumalted data in encripted_data vector should be sent to uart
+                    elsif encripted_index = UART_DATA_SIZE - 1 then
                         encripted_data(encripted_index) <= cypher_out;
-                        cypher_in <= rom_data_out(rom_data_index);
-                        rom_data_index <= rom_data_index +1;
-                        encripted_index <= encripted_index + 1;   
-
-                       
-                        
-                    elsif encripted_index = 7 then
-                        encripted_data(encripted_index) <= cypher_out;
-                        test_index <= cypher_out;
-                        if rom_data_index < 15 then
+                        if rom_data_index < ROM_DATA_SIZE - 1 then
                             cypher_in <= rom_data_out(rom_data_index);
                             rom_data_index <= rom_data_index +1;
                         end if;
-                        cypher_en <= '0';
-                        encripted_index <= 0;
-                        
-                        -- send to uart
-                        
-                        state <= SENDING;
+                        cypher_en <= '0'; -- disable cypher to not continue with lsfr, it's crucial to syncronize with the other cypher
+                        encripted_index <= 0; -- reset index
+                        state <= SENDING; -- send to uart
+
+                    -- normal proceeded, sent to cypher and save the cypher output
                     else 
                         encripted_data(encripted_index) <= cypher_out;
-                        test_index <= cypher_out;
-                        if rom_data_index < 16 then
+                        if rom_data_index < ROM_DATA_SIZE then
                             cypher_in <= rom_data_out(rom_data_index);
                             rom_data_index <= rom_data_index +1;
                         end if;
                         encripted_index <= encripted_index +1;
-                        
                     end if;
                     
                 when SENDING =>
                         uart_in_data <= encripted_data;
-                        encripted_data <= (others => 'U');
+                        uart_start <= '1'; -- start uart sending
+                        encripted_data <= (others => 'U'); -- clean encripted data, necessary only to easy to visualize in simulation
 
-                        uart_start <= '1';
-                        if rom_data_index > 15 then
+                        -- if it's the last bit of rom data, read the next rom data
+                        -- otherwise repeat encription to the others 8 bits
+                        if rom_data_index >  ROM_DATA_SIZE - 1 then
                             state <= READING;
-                            index <= index +1;
+                            rom_index <= rom_index +1;
                         else 
                             state <= ENCRIPTING;
                             cypher_en <= '1';
                         end if;    
                 
                 when others =>
+                    -- This the last state in this case will only disable uart_start to not send any more data
                     uart_start <= '0';
-                    -- assert false report "End of simulation" severity failure;
             end case;
         end if;
     end process;

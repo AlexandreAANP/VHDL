@@ -4,20 +4,23 @@ use ieee.numeric_std.all;
 
 
 entity controller1_rom is
+    generic (
+        addr_size : integer := 6;
+        data_size : integer := 16
+    );
     Port ( 
-        addr : in unsigned(5 downto 0);
-        data_out : out signed(15 downto 0)
+        addr : in unsigned(addr_size - 1 downto 0);
+        data_out : out signed(data_size -1 downto 0)
     );
 end controller1_rom;
 
 architecture Behaviroal of controller1_rom is 
-
+constant ROM_SIZE : integer := 51;
     
-type coeff_array is array (0 to 50) of signed(15 downto 0);
+type coeff_array is array (0 to ROM_SIZE-1) of signed(data_size - 1 downto 0);
 
--- Declare the constant using the defined type
+-- Filter Data
 constant coeffs : coeff_array := (
-    -- TODO ADDED the data in ROOM
     "1111111110101011",
     "1111111110110001",
     "1111111110110011",

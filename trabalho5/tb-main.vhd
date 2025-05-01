@@ -17,7 +17,6 @@ architecture testbench of tb_main is
     signal uart_in_data : std_logic_vector(data_width_const - 1 downto 0);
     signal uart_busy : std_logic;
     signal uart_invalid :std_logic;
-    signal start_uart : std_logic;
     signal uart_rx : std_logic;
     signal uart_tx : std_logic;
     signal uart_receiving_in_serial: std_logic := '1'; --the uart will always receive in parell
@@ -28,9 +27,7 @@ architecture testbench of tb_main is
             clk : in std_logic;
             rst : in std_logic;
             en : in std_logic;
-            -- rx : in std_logic;
-            tx : out std_logic;
-            start_uart: out std_logic
+            tx : out std_logic
         );
     end component;
 
@@ -39,8 +36,7 @@ architecture testbench of tb_main is
             clk : in std_logic;
             rst : in std_logic;
             en : in std_logic;
-            rx : in std_logic;
-            start_uart: in std_logic
+            rx : in std_logic
         );
     end component;
     
@@ -50,15 +46,13 @@ begin
         clk => clk,
         rst => rst,
         en => en,
-        tx => encripted_rx_data,
-        start_uart => start_uart
+        tx => encripted_rx_data
     );
 
     uui_controller2: controller2 port map(
         clk => clk,
         rst => rst,
         en => en,
-        start_uart => start_uart,
         rx => encripted_rx_data
 
     );

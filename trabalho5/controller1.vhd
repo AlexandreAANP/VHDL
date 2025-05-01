@@ -7,8 +7,7 @@ entity controller1 is
         clk: in std_logic;
         rst: in std_logic;
         en: in std_logic;
-        tx: out std_logic;
-        start_uart : out std_logic
+        tx: out std_logic
     );
 end controller1;
 
@@ -39,7 +38,6 @@ architecture Behavioral of controller1 is
     signal uart_invalid :std_logic;
     signal uart_start : std_logic := '0';
     signal uart_rx : std_logic := '1'; -- set '1' for uart doesn't start serial receiving
-    signal uart_receiving_in_serial : std_logic := '0'; -- in this case the uart will never receive in serial
     signal test_index : std_logic;
 
     component controller1_rom is 
@@ -65,7 +63,6 @@ architecture Behavioral of controller1 is
             rst : in std_logic;
             en : in std_logic;
             start: in std_logic;
-            receiving_in_serial: in std_logic;
             rx : in std_logic;
             data_in : in std_logic_vector(0 to ROM_DATA_SIZE/2 - 1);
             is_busy: out std_logic;
@@ -94,7 +91,6 @@ begin
         rst => rst,
         en => en,
         start => uart_start,
-        receiving_in_serial => uart_receiving_in_serial,
         rx => uart_rx,
         data_in => uart_in_data,
         is_busy => uart_busy,
@@ -102,7 +98,7 @@ begin
         tx => tx
     );
 
-    start_uart <= uart_start;
+    -- start_uart <= uart_start;
     controller_process: process(clk, uart_busy)
     
     -- variable encripted_index : integer := 0;
@@ -116,7 +112,9 @@ begin
         elsif falling_edge(clk) then
             case state is
                 when READING =>
+                    
                     if index = ROM_SIZE then
+                        -- uart_start <= '0';
                         state <= DONE;
                     else
                         rom_addr <= to_unsigned(index, rom_addr'length);
@@ -124,11 +122,10 @@ begin
                         
                         rom_data_index <= 0;
                         encripted_index <= 0;
-                        -- cypher_in <= rom_data_out(0);
                     end if;
                     
                 when ENCRIPTING =>
-                    
+                    -- uart_start <= '0';
 
                     if rom_data_index = 0  then
                         cypher_en <= '1';
@@ -153,6 +150,7 @@ begin
                         encripted_index <= 0;
                         
                         -- send to uart
+                        
                         state <= SENDING;
                     else 
                         encripted_data(encripted_index) <= cypher_out;
@@ -179,6 +177,7 @@ begin
                         end if;    
                 
                 when others =>
+                    uart_start <= '0';
                     -- assert false report "End of simulation" severity failure;
             end case;
         end if;

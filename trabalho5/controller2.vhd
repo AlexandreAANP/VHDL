@@ -8,9 +8,7 @@ entity controller2 is
         clk: in std_logic;
         rst: in std_logic;
         en: in std_logic;
-        start_uart: in std_logic;
         rx: in std_logic
-       -- tx: out std_logic;
     );
 end entity;
 
@@ -18,7 +16,6 @@ architecture Behavioral of controller2 is
     
     constant ROM_SIZE :integer := 50; -- how many elements rom have
     constant ROM_DATA_SIZE : integer := 16;
-    constant RECEIVING_IN_SERIAL : std_logic := '1';
     
     type state_type is (INIT, READ_UART,DECRIPTING, FILTER);
     signal state : state_type := INIT;
@@ -32,6 +29,7 @@ architecture Behavioral of controller2 is
     signal uart_busy: std_logic;
     signal uart_invalid: std_logic;
     signal uart_tx: std_logic;
+    signal uart_start : std_logic := '0';
     
     type sample_array is array (0 to 50) of signed(15 downto 0);
     signal filter_data : sample_array; -- := (others => to_signed(0, 15));
@@ -54,7 +52,6 @@ architecture Behavioral of controller2 is
             rst : in std_logic;
             en : in std_logic;
             start: in std_logic;
-            receiving_in_serial: in std_logic;
             rx : in std_logic;
             data_in : in std_logic_vector(0 to ROM_DATA_SIZE/2 - 1);
             is_busy: out std_logic;
@@ -97,8 +94,7 @@ begin
         clk => clk,
         rst => rst,
         en => en,
-        start => start_uart,
-        receiving_in_serial => RECEIVING_IN_SERIAL,
+        start => uart_start,
         data_in => uart_data_in,
         rx => rx,
         tx => uart_tx,

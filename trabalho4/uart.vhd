@@ -54,19 +54,19 @@ begin
                     tx_data <= (others => '0');
                     data_out <= (others => '0');
                     index := 0;
-                    if start = '1' then
+                   
                         
-                        if rx = '0' then
-                            state <= BUSY;
-                            receiving_in_series <= '1';
-                        else
-                            state <= BUSY;
-                            receiving_in_series <= '0';
-                            tx <= '0'; -- send the bit to start comunicate
-                            tx_data <= data_in; -- save data_in in tx_data 
-                        end if;
+                    if rx = '0' then
+                        state <= BUSY;
+                        receiving_in_series <= '1';
 
+                    elsif start = '1' then
+                        state <= BUSY;
+                        receiving_in_series <= '0';
+                        tx <= '0'; -- send the bit to start comunicate
+                        tx_data <= data_in; -- save data_in in tx_data 
                     end if;
+
 
                 when BUSY =>
                     if receiving_in_series = '1' then

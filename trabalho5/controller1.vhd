@@ -65,17 +65,20 @@ architecture Behavioral of controller1 is
     end component;
 
     component uart is 
+        GENERIC(
+            data_width : integer := UART_DATA_SIZE
+        );
         Port(
             clk : in std_logic;
             rst : in std_logic;
             en : in std_logic;
             start: in std_logic;
             rx : in std_logic;
-            data_in : in std_logic_vector(0 to ROM_DATA_SIZE/2 - 1);
+            data_in : in std_logic_vector(0 to UART_DATA_SIZE - 1);
             is_busy: out std_logic;
             data_invalid: out std_logic;
             tx : out std_logic;
-            data_out : out std_logic_vector(0 to ROM_DATA_SIZE/2 - 1)
+            data_out : out std_logic_vector(0 to UART_DATA_SIZE - 1)
         );
     end component;
 begin

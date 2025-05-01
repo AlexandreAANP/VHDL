@@ -6,23 +6,31 @@ entity tb_main is
 end tb_main;
 
 architecture testbench of tb_main is
-    constant data_width_const : integer := 8;
     constant clk_period : time := 10 ns;
 
+    -- CONSTANTS
+    -- You can change these constants to have the desired behavior for data bigger or smaller
+    -- make sure if you change filter or noisy filter sizes, change also the rom components
+    constant FILTER_SIZE : integer := 51;
+    constant FILTER_ADDR_SIZE : integer := 6;
+    constant NOISY_SIGNAL_SIZE : integer := 1000;
+    constant NOISY_SIGNAL_ADDR_SIZE : integer := 10;
+    constant UART_DATA_SIZE : integer := 8;
+    constant DATA_SIZE : integer :=16;  
+
+    -- CONTROL SIGNALS
     signal clk : std_logic := '0';
     signal rst : std_logic := '1';
     signal en : std_logic := '0';
-    signal tx : std_logic;
-
-    signal uart_in_data : std_logic_vector(data_width_const - 1 downto 0);
-    signal uart_busy : std_logic;
-    signal uart_invalid :std_logic;
-    signal uart_rx : std_logic;
-    signal uart_tx : std_logic;
-    signal uart_receiving_in_serial: std_logic := '1'; --the uart will always receive in parell
-    
     signal encripted_rx_data : std_logic;
+
     component controller1
+        Generic (
+            gen_rom_size : integer := FILTER_SIZE;
+            gen_rom_addr_size : integer := FILTER_ADDR_SIZE; 
+            gen_rom_data_size : integer := DATA_SIZE; 
+            gen_uart_data_size : integer := UART_DATA_SIZE -- number of bits of uart in
+        );
         Port (
             clk : in std_logic;
             rst : in std_logic;
@@ -32,6 +40,13 @@ architecture testbench of tb_main is
     end component;
 
     component controller2
+        Generic (
+            gen_filter_size : integer := FILTER_SIZE;
+            gen_rom_addr_size : integer := NOISY_SIGNAL_ADDR_SIZE;
+            gen_rom_data_size : integer := DATA_SIZE;
+            gen_uart_data_size : integer := UART_DATA_SIZE;
+            gen_noisy_signal_size : integer := NOISY_SIGNAL_SIZE
+        );
         Port (
             clk : in std_logic;
             rst : in std_logic;
@@ -77,7 +92,7 @@ begin
         wait for 20 ns;
         rst <= '0';
         en <= '1';
-        -- assert false report "End of simulation" severity failure;
+
         -- End of simulation
         wait;
     end process;

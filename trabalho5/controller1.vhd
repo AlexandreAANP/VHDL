@@ -3,6 +3,15 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 entity controller1 is
+    GENERIC (
+        -- if you change this you need to change the rom component itself
+        gen_rom_size : integer := 51; -- how many elements filter rom have
+        gen_rom_addr_size : integer := 6; -- if you change this you need to change the rom component itself
+        gen_rom_data_size : integer := 16; -- number of bits of rom output;
+
+        -- this should the same as the other controller uart component
+        gen_uart_data_size : integer := 8 -- number of bits of uart in
+    );
     Port(
         clk: in std_logic;
         rst: in std_logic;
@@ -13,11 +22,11 @@ end controller1;
 
 architecture Behavioral of controller1 is
     -- CONSTANTS
-    -- You can change this constantes to have the disered behavior for data bigger or smaller
-    constant ROM_SIZE :integer := 51; -- how many elements filter rom have
-    constant ROM_ADDR_SIZE :integer := 6; -- if you change this you need to change the rom component itself
-    constant ROM_DATA_SIZE : integer := 16; -- number of bits of rom output; -- if you change this you need to change the rom component itself
-    constant UART_DATA_SIZE : integer := 8; -- number of bits of uart in
+    -- You can change this constantes by changinc the generic values to have the disered behavior for data bigger or smaller
+    constant ROM_SIZE :integer := gen_rom_size; 
+    constant ROM_ADDR_SIZE :integer := gen_rom_addr_size; 
+    constant ROM_DATA_SIZE : integer := gen_rom_data_size; 
+    constant UART_DATA_SIZE : integer := gen_uart_data_size; 
 
     -- POSSIBLE STATES
     type state_type is (INIT, READING, ENCRIPTING, SENDING, DONE);

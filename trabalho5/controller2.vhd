@@ -4,6 +4,13 @@ use IEEE.NUMERIC_STD.ALL;
 
 
 entity controller2 is
+    GENERIC (
+        gen_filter_size : integer := 51;
+        gen_rom_addr_size : integer := 10;
+        gen_rom_data_size : integer := 16;
+        gen_uart_data_size : integer := 8;
+        gen_noisy_signal_size : integer := 1000
+    );
     PORT(
         clk: in std_logic;
         rst: in std_logic;
@@ -14,12 +21,12 @@ end entity;
 
 architecture Behavioral of controller2 is
     -- CONSTANTS
-    -- You can change this constantes to have the disered behavior for data bigger or smaller
-    constant FILTER_SIZE :integer := 51; -- how many elements rom have
-    constant ROM_ADDR_SIZE : integer := 10;
-    constant ROM_DATA_SIZE : integer := 16;
-    constant UART_DATA_SIZE : integer := 8;
-    constant NOISY_SIGNAL_SIZE : integer := 1000;
+     -- You can change this constantes by changinc the generic values to have the disered behavior for data bigger or smaller
+    constant FILTER_SIZE :integer := gen_filter_size; 
+    constant ROM_ADDR_SIZE : integer := gen_rom_addr_size;
+    constant ROM_DATA_SIZE : integer := gen_rom_data_size;
+    constant UART_DATA_SIZE : integer := gen_uart_data_size;
+    constant NOISY_SIGNAL_SIZE : integer := gen_noisy_signal_size;
     
 
     -- POSSIBLE STATES

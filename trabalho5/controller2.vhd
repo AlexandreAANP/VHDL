@@ -6,7 +6,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity controller2 is
     GENERIC (
         gen_filter_size : integer := 51;
-        gen_rom_addr_size : integer := 10;
+        gen_rom_addr_size : integer := 6;
         gen_rom_data_size : integer := 16;
         gen_uart_data_size : integer := 8;
         gen_noisy_signal_size : integer := 1000
@@ -30,7 +30,7 @@ architecture Behavioral of controller2 is
     
 
     -- POSSIBLE STATES
-    type state_type is (INIT, READ_UART, DECRIPTING, FILTER);
+    type state_type is (INIT, READ_UART, DECRIPTING, DECRIPT_NEXT_SIGNAL, FILTER);
     signal state : state_type := INIT; -- Start in INIT state
 
     -- RECEIVING SIGNALS
@@ -92,8 +92,8 @@ architecture Behavioral of controller2 is
 
     component controller2_rom is
         Port(
-            addr : in unsigned(9 downto 0);
-            data_out : out signed(15 downto 0)
+            addr : in unsigned(ROM_ADDR_SIZE - 1 downto 0);
+            data_out : out signed(ROM_DATA_SIZE - 1 downto 0)
         );
     end component;
 
@@ -144,16 +144,18 @@ begin
     controller2_process: process(clk, state)
     variable uart_index : integer := 0;
     variable decript_index : integer := 0;
-    variable filter_index : integer := -1;
+    variable filter_index : integer := 0;
+    variable signal_index : integer := -1;
     variable uart_already_start : std_logic := '0';
-    
     variable acc : signed((ROM_DATA_SIZE * 2) - 1 downto 0) := (others => '0');
+    variable read_x_data: integer := FILTER_SIZE;
     begin
         if rst='1' then
             state <= INIT;
             uart_index := 0;
             uart_already_start := '0';
-            filter_index := -1;
+            filter_index := 0;
+            signal_index := -1;
             decript_index := 0;
 
         elsif falling_edge(clk) then
@@ -176,15 +178,15 @@ begin
                             uart_index := uart_index + 1;
 
                             if decript_index = 0 then -- only do this one time per full data
-                                if filter_index = FILTER_SIZE  then -- already finish to receive the filter
+                                if signal_index = read_x_data  then -- already finish to receive the filter
                                     filter_index := 0; -- reuse variable for filtering
                                     state <= FILTER;
-                                elsif filter_index > -1 then -- ignore the first time data_decripted stil doesn't have data
-                                    filter_data(filter_index) <= signed(data_decripted);
-                                    signal_data(filter_index) <= data_out_signal; -- read noisy signal from rom
+                                elsif signal_index > -1 then -- ignore the first time data_decripted stil doesn't have data
+                                    signal_data(signal_index) <= signed(data_decripted); -- save the signal data
+                                    filter_data(filter_index) <= data_out_signal; -- read filter signal from rom
                                 end if;
 
-                                filter_index := filter_index + 1; -- increment filter index
+                                signal_index := signal_index + 1; -- increment filter index
                                 data_decripted <= (others => 'U'); -- reset data_decripted, only necessary for debuging
                             end if;
                             
@@ -230,7 +232,11 @@ begin
                         write_file_enable <= '1';
                         
                         -- shift the signal sample
-                        addr_signal <= to_unsigned((FILTER_SIZE - 1+ filter_index), 10);
+                        -- should get the next encripted data
+                        state <= DECRIPTING;
+                        read_x_data := 1;
+
+                        -- addr_signal <= to_unsigned((FILTER_SIZE - 1+ filter_index), 10);
                         filter_index := filter_index + 1;
                         -- get the next noisy signal data
                         signal_data <= signal_data(1 to FILTER_SIZE - 1) & data_out_signal;

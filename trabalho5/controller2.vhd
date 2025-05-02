@@ -146,9 +146,9 @@ begin
     variable decript_index : integer := 0;
     variable filter_index : integer := 0;
     variable signal_index : integer := -1;
+    variable should_shift_signal : std_logic := '0';
     variable uart_already_start : std_logic := '0';
     variable acc : signed((ROM_DATA_SIZE * 2) - 1 downto 0) := (others => '0');
-    variable read_x_data: integer := FILTER_SIZE;
     begin
         if rst='1' then
             state <= INIT;
@@ -165,28 +165,33 @@ begin
                         -- change the state to decripting as soon uart start and is not busy anymore
                         if uart_already_start = '1' and uart_busy = '0' then
                             state <= DECRIPTING;
-                            addr_signal <= to_unsigned(filter_index, addr_signal'length); -- change the addr of noisy signal rom
+                            if signal_index < FILTER_SIZE then
+                                addr_signal <= to_unsigned(signal_index, addr_signal'length); -- change the addr of noisy signal rom
+                            end if;
                         elsif uart_busy = '1' then
                             uart_already_start := '1';    
                         end if;
 
                     when DECRIPTING =>
+                    write_file_enable <= '0'; -- disable write file    
                         if uart_index = 0 then
                             cypher_en <= '1'; --enable cypher
                             data_encripted <= uart_output; -- save the output, could change in the next iteractions
                             cypher_in <= uart_output(0); --send the first bit already
                             uart_index := uart_index + 1;
 
-                            if decript_index = 0 then -- only do this one time per full data
-                                if signal_index = read_x_data  then -- already finish to receive the filter
-                                    filter_index := 0; -- reuse variable for filtering
-                                    state <= FILTER;
-                                elsif signal_index > -1 then -- ignore the first time data_decripted stil doesn't have data
+                            if decript_index = 0 then -- only do this one time per two bytes of data          
+                                if should_shift_signal = '1' then
+                                    signal_data <= signal_data(1 to FILTER_SIZE - 1) &  signed(data_decripted); --shift signal data
+
+                                elsif signal_index > -1 and signal_index < FILTER_SIZE then -- ignore the first time data_decripted stil doesn't have data
                                     signal_data(signal_index) <= signed(data_decripted); -- save the signal data
-                                    filter_data(filter_index) <= data_out_signal; -- read filter signal from rom
+                                    filter_data(signal_index) <= data_out_signal; -- read filter signal from rom
                                 end if;
 
-                                signal_index := signal_index + 1; -- increment filter index
+                                if signal_index < FILTER_SIZE then 
+                                    signal_index := signal_index + 1; -- increment filter index
+                                end if;
                                 data_decripted <= (others => 'U'); -- reset data_decripted, only necessary for debuging
                             end if;
                             
@@ -211,12 +216,17 @@ begin
                                 -- reset the decripted index
                                 if decript_index = ROM_DATA_SIZE then
                                         decript_index := 0;
+                                        if signal_index = FILTER_SIZE then
+                                            state <= FILTER;
+                                        end if;
                                 end if;
                             end if;
                             
                         end if;
                     
                     when FILTER =>
+                        should_shift_signal := '1'; -- next signal data should be shifted
+
                         -- filter result has the size of noisy signal minus the filter sizes; in this case we want index so subtract by one 
                         if filter_index = NOISY_SIGNAL_SIZE - FILTER_SIZE - 1 then
                             write_file_enable <= '0';
@@ -234,13 +244,8 @@ begin
                         -- shift the signal sample
                         -- should get the next encripted data
                         state <= DECRIPTING;
-                        read_x_data := 1;
-
-                        -- addr_signal <= to_unsigned((FILTER_SIZE - 1+ filter_index), 10);
                         filter_index := filter_index + 1;
-                        -- get the next noisy signal data
-                        signal_data <= signal_data(1 to FILTER_SIZE - 1) & data_out_signal;
-
+                        
                    when others =>
                         assert false report "End of simulation" severity failure;
                 end case;

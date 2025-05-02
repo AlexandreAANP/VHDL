@@ -45,7 +45,7 @@ architecture testbench of tb_main is
             gen_rom_addr_size : integer := FILTER_ADDR_SIZE;
             gen_rom_data_size : integer := DATA_SIZE;
             gen_uart_data_size : integer := UART_DATA_SIZE;
-            gen_noisy_signal_size : integer := FILTER_SIZE
+            gen_noisy_signal_size : integer := NOISY_SIGNAL_SIZE
         );
         Port (
             clk : in std_logic;

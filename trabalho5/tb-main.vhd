@@ -16,7 +16,7 @@ architecture testbench of tb_main is
     constant NOISY_SIGNAL_SIZE : integer := 1000;
     constant NOISY_SIGNAL_ADDR_SIZE : integer := 10;
     constant UART_DATA_SIZE : integer := 8;
-    constant DATA_SIZE : integer :=16;  
+    constant DATA_SIZE : integer := 16;  
 
     -- CONTROL SIGNALS
     signal clk : std_logic := '0';
@@ -26,8 +26,8 @@ architecture testbench of tb_main is
 
     component controller1
         Generic (
-            gen_rom_size : integer := FILTER_SIZE;
-            gen_rom_addr_size : integer := FILTER_ADDR_SIZE; 
+            gen_rom_size : integer := NOISY_SIGNAL_SIZE;
+            gen_rom_addr_size : integer := NOISY_SIGNAL_ADDR_SIZE; 
             gen_rom_data_size : integer := DATA_SIZE; 
             gen_uart_data_size : integer := UART_DATA_SIZE -- number of bits of uart in
         );
@@ -42,10 +42,10 @@ architecture testbench of tb_main is
     component controller2
         Generic (
             gen_filter_size : integer := FILTER_SIZE;
-            gen_rom_addr_size : integer := NOISY_SIGNAL_ADDR_SIZE;
+            gen_rom_addr_size : integer := FILTER_ADDR_SIZE;
             gen_rom_data_size : integer := DATA_SIZE;
             gen_uart_data_size : integer := UART_DATA_SIZE;
-            gen_noisy_signal_size : integer := NOISY_SIGNAL_SIZE
+            gen_noisy_signal_size : integer := FILTER_SIZE
         );
         Port (
             clk : in std_logic;

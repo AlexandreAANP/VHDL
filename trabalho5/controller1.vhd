@@ -5,10 +5,9 @@ use IEEE.NUMERIC_STD.ALL;
 entity controller1 is
     GENERIC (
         -- if you change this you need to change the rom component itself
-        gen_rom_size : integer := 51; -- how many elements filter rom have
-        gen_rom_addr_size : integer := 6; -- if you change this you need to change the rom component itself
+        gen_rom_size : integer := 1000; -- how many elements signal rom have
+        gen_rom_addr_size : integer := 10; -- if you change this you need to change the rom component itself
         gen_rom_data_size : integer := 16; -- number of bits of rom output;
-
         -- this should the same as the other controller uart component
         gen_uart_data_size : integer := 8 -- number of bits of uart in
     );

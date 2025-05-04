@@ -52,7 +52,6 @@ architecture Behavioral of controller2 is
     type sample_array is array (0 to FILTER_SIZE - 1) of signed(ROM_DATA_SIZE - 1 downto 0);
     signal filter_data : sample_array;
     signal signal_data : sample_array;
-    signal filter_index : integer := 0;
     signal calc_convultion : signed((ROM_DATA_SIZE * 2) - 1 downto 0) := (others => '0'); -- this should have the double size of ROM_DATA_SIZE to preserver the calc data
 
     -- ROM NOISY SIGNAL, SIGNALS

@@ -28,8 +28,8 @@ architecture Behavioral of controller1 is
     constant UART_DATA_SIZE : integer := gen_uart_data_size; 
 
     -- POSSIBLE STATES
-    type state_type is (INIT, READING, ENCRIPTING, SENDING, DONE);
-    signal state : state_type := INIT;
+    type state_type is (READING, ENCRIPTING, SENDING, DONE);
+    signal state : state_type := READING;
     
     -- READING SIGNALS
     signal rom_addr : unsigned(ROM_ADDR_SIZE - 1 downto 0);
